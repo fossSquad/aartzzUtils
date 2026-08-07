@@ -1,5 +1,5 @@
 from base_plugin import MethodHook
-from hook_utils import find_class, get_private_field
+from hook_utils import find_class, get_private_field, set_private_field
 
 class DialogCellBuildLayoutHook(MethodHook):
     def __init__(self, plugin):
@@ -172,7 +172,7 @@ class DialogCellOnDrawHook(MethodHook):
 
             pin_top = count_top + (AndroidUtilities.dp(20.0) - icon_h) // 2
 
-            if unread_count != 0 or mark_unread:
+            if unread_count != 0 or mark_unread or draw_count:
                 try:
                     count_left = int(get_private_field(this, "countLeft"))
                     pin_left = count_left - icon_w - AndroidUtilities.dp(6.0)
@@ -180,15 +180,6 @@ class DialogCellOnDrawHook(MethodHook):
                     pin_left = measured_w - icon_w - AndroidUtilities.dp(14.0)
             else:
                 pin_left = measured_w - icon_w - AndroidUtilities.dp(14.0)
-            
-            # Determine dynamic pin_left position (avoiding unread badge)
-            pin_left = measured_w - icon_w - AndroidUtilities.dp(14.0)
-            try:
-                count_width = get_private_field(this, "countWidth")
-                if count_width:
-                    pin_left = measured_w - count_width - icon_w - AndroidUtilities.dp(24.0)
-            except Exception:
-                pass
 
             canvas.save()
             
