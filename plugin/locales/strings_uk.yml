@@ -11,3 +11,7 @@ settings_chat_header: Чат
 settings_home_header: Головний екран
 hide_pin_if_unread_title: Ховати закріп, якщо є непрочитані
 hide_pin_if_unread_desc: Ховає іконку закріпу, якщо в чаті є нові повідомлення
+
+hide_send_button_bg_title: Сховати обводку мікрофона
+hide_send_button_bg_desc: Прибирає фонове коло з кнопки запису голосових та відеоповідомлень
+

@@ -2,7 +2,7 @@ from elyx import strings
 from base_plugin import BasePlugin
 from java.lang import Class as JavaClass
 
-from .hooks import IsBasePackOnlyHook, DialogCellOnDrawHook, DialogCellBuildLayoutHook
+from .hooks import IsBasePackOnlyHook, DialogCellOnDrawHook, DialogCellBuildLayoutHook, GetThemedColorHook, SendButtonOnDrawHook
 from .ui import SettingsMixin
 
 class ExteraRestorePlugin(SettingsMixin, BasePlugin):
@@ -33,3 +33,21 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
                 self.log("Hooked DialogCell.onDraw")
             else:
                 self.log("Failed to hook DialogCell.onDraw")
+
+        # 3. Hook ChatActivityEnterView (Voice/Video button background)
+        ChatActivityEnterViewClass = JavaClass.forName("org.telegram.ui.Components.ChatActivityEnterView")
+        if ChatActivityEnterViewClass:
+            hooked = self.hook_all_methods(ChatActivityEnterViewClass, "getThemedColor", GetThemedColorHook(self))
+            if hooked:
+                self.log("Hooked ChatActivityEnterView.getThemedColor")
+            else:
+                self.log("Failed to hook ChatActivityEnterView.getThemedColor")
+
+        # 4. Hook SendButton (Typing mode send button background)
+        SendButtonClass = JavaClass.forName("org.telegram.ui.Components.ChatActivityEnterView$SendButton")
+        if SendButtonClass:
+            hooked = self.hook_all_methods(SendButtonClass, "onDraw", SendButtonOnDrawHook(self))
+            if hooked:
+                self.log("Hooked SendButton.onDraw")
+            else:
+                self.log("Failed to hook SendButton.onDraw")

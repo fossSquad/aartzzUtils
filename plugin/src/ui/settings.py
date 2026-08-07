@@ -14,6 +14,14 @@ class SettingsMixin:
                 icon="msg_voice",
                 on_change=lambda v: self.set_setting("voice_video_anim", v)
             ),
+            Switch(
+                key="hide_send_button_bg",
+                text=strings("hide_send_button_bg_title"),
+                subtext=strings("hide_send_button_bg_desc"),
+                default=True,
+                icon="msg_voice",
+                on_change=lambda v: self.set_setting("hide_send_button_bg", v)
+            ),
             Header(text=strings("settings_home_header")),
             Switch(
                 key="pinned_bg",

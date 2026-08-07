@@ -11,3 +11,7 @@ settings_chat_header: Chat
 settings_home_header: Home
 hide_pin_if_unread_title: Hide Pin if Unread
 hide_pin_if_unread_desc: Hides the pin icon when the chat has unread messages
+
+hide_send_button_bg_title: Hide Voice/Video Outline
+hide_send_button_bg_desc: Removes the background circle from the voice/video recording button
+
