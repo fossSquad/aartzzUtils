@@ -1,0 +1,13 @@
+plugin_description: Restores old functions, that for some reason removed in new versions
+loaded: Extera Restore loaded
+settings_header: Features
+voice_video_anim_title: Voice/Video Switch Animation
+voice_video_anim_desc: Restores the bouncing animation when switching modes
+pinned_bg_title: Pinned Chat Highlight
+pinned_bg_desc: Shows a subtle background highlight for pinned chats
+legacy_pin_pos_title: Legacy Pin Icon Position
+legacy_pin_pos_desc: Moves the pin icon to the bottom right of the chat cell
+settings_chat_header: Chat
+settings_home_header: Home
+hide_pin_if_unread_title: Hide Pin if Unread
+hide_pin_if_unread_desc: Hides the pin icon when the chat has unread messages

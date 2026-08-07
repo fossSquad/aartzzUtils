@@ -1,0 +1,13 @@
+plugin_description: Восстанавливает старые функции, которые были удалены с неизвестной причиной
+loaded: Extera Restore загружен
+settings_header: Функции
+voice_video_anim_title: Анимация переключения Голос/Видео
+voice_video_anim_desc: Восстанавливает старую анимацию при смене режима
+pinned_bg_title: Подсветка закрепленных чатов
+pinned_bg_desc: Показывает легкий фон для закрепленных чатов
+legacy_pin_pos_title: Старая позиция иконки закрепа
+legacy_pin_pos_desc: Смещает иконку закрепа в правый нижний угол чата
+settings_chat_header: Чат
+settings_home_header: Главный экран
+hide_pin_if_unread_title: Скрывать закреп, если есть непрочитанные
+hide_pin_if_unread_desc: Прячет иконку закрепа, если в чате есть новые сообщения
