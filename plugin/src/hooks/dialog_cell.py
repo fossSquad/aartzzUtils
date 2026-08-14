@@ -206,77 +206,39 @@ class DialogCellOnDrawHook(MethodHook):
         self.fields = _FieldCache()
         self.ThemeProxy = find_class("org.telegram.ui.ActionBar.Theme")
         self.key_chats_pinnedOverlay = getattr(self.ThemeProxy, "key_chats_pinnedOverlay", None)
-        try:
-            from android.graphics import Paint
-            self.bg_paint = Paint()
-        except Exception:
-            self.bg_paint = None
+        self.bg_paint = None
         
         self.setting_legacy_pin_pos = self.plugin.get_setting("legacy_pin_pos", True)
         self.setting_pinned_bg = self.plugin.get_setting("pinned_bg", True)
-        
-        try:
-            DialogCellClass = find_class("org.telegram.ui.Cells.DialogCell")
-            self.f_drawPin = DialogCellClass.getDeclaredField("drawPin")
-            self.f_drawPin.setAccessible(True)
-            self.f_drawPinForced = DialogCellClass.getDeclaredField("drawPinForced")
-            self.f_drawPinForced.setAccessible(True)
-            self.f_isTopic = DialogCellClass.getDeclaredField("isTopic")
-            self.f_isTopic.setAccessible(True)
-            self.f_resourcesProvider = DialogCellClass.getDeclaredField("resourcesProvider")
-            self.f_resourcesProvider.setAccessible(True)
-        except Exception:
-            self.f_drawPin = None
-            self.f_drawPinForced = None
-            self.f_isTopic = None
-            self.f_resourcesProvider = None
-
-    def _get_f(self, field, this, default):
-        if field is None: return default
-        try:
-            return field.get(this)
-        except Exception:
-            return default
-
-    def _set_f(self, field, this, value):
-        if field is not None:
-            try:
-                field.set(this, value)
-            except Exception:
-                pass
 
     def before_hooked_method(self, param):
         this = param.thisObject
         cell_id = _java_identity(this)
         original_flags = (False, False)
         is_pinned = False
-        is_topic = False
         
         try:
-            dp = self._get_f(self.f_drawPin, this, False)
-            dpf = self._get_f(self.f_drawPinForced, this, False)
-            is_topic = self._get_f(self.f_isTopic, this, False)
+            dp = self.fields.get(this, "drawPin", False)
+            dpf = self.fields.get(this, "drawPinForced", False)
             
             is_pinned = bool(dp) or bool(dpf)
             original_flags = (bool(dp), bool(dpf))
 
             if is_pinned and self.setting_pinned_bg:
+                canvas = param.args[0]
+                if self.bg_paint is None:
+                    from android.graphics import Paint
+                    self.bg_paint = Paint()
                 try:
-                    canvas = param.args[0]
-                    color = None
                     try:
-                        rp = self._get_f(self.f_resourcesProvider, this, None)
+                        rp = self.fields.get(this, "resourcesProvider")
                         if self.key_chats_pinnedOverlay is not None:
                             color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay, rp)
+                        else:
+                            raise Exception("no key")
                     except Exception:
-                        pass
-                        
-                    if color is None and self.key_chats_pinnedOverlay is not None:
-                        try:
-                            color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay)
-                        except Exception:
-                            pass
-                            
+                        color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay) if self.key_chats_pinnedOverlay is not None else None
+                    
                     if color is not None:
                         self.bg_paint.setColor(color)
                         self.bg_paint.setAlpha(15)
@@ -286,8 +248,8 @@ class DialogCellOnDrawHook(MethodHook):
 
             if is_pinned and self.setting_legacy_pin_pos:
                 try:
-                    self._set_f(self.f_drawPin, this, False)
-                    self._set_f(self.f_drawPinForced, this, False)
+                    self.fields.set(this, "drawPin", False)
+                    self.fields.set(this, "drawPinForced", False)
                 except Exception as e:
                     self.plugin.log(f"drawPin hide error: {e}")
 
@@ -305,8 +267,8 @@ class DialogCellOnDrawHook(MethodHook):
 
         if original_flags != (False, False):
             try:
-                self._set_f(self.f_drawPin, this, original_flags[0])
-                self._set_f(self.f_drawPinForced, this, original_flags[1])
+                self.fields.set(this, "drawPin", original_flags[0])
+                self.fields.set(this, "drawPinForced", original_flags[1])
             except Exception:
                 pass
 
@@ -328,3 +290,4 @@ class DialogCellOnDrawHook(MethodHook):
             canvas.restore()
         except Exception as e:
             self.plugin.log(f"[after layout draw] {e}")
+
