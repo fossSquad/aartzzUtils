@@ -1,7 +1,7 @@
 zipFormat: elyx
 source: plugin/src
-buildNameUncompiled: legacyutils
-buildNameCompiled: legacyutils-compiled
+buildNameUncompiled: aartzzutils
+buildNameCompiled: aartzzutils-compiled
 ignoreAll:
 - plugin/.elyxbuilder/cache/*
 compilationIgnore:

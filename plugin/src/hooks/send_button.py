@@ -1,5 +1,5 @@
 from base_plugin import MethodHook
-from hook_utils import find_class, get_private_field
+from hook_utils import find_class, get_private_field, set_private_field
 
 class GetThemedColorHook(MethodHook):
     def __init__(self, plugin):
@@ -8,10 +8,13 @@ class GetThemedColorHook(MethodHook):
             self.ThemeClass = find_class("org.telegram.ui.ActionBar.Theme")
             self.key_chat_messagePanelSend = getattr(self.ThemeClass, "key_chat_messagePanelSend")
             self.ThreadClass = find_class("java.lang.Thread")
-        except Exception as e:
+        except Exception:
+            self.ThemeClass = None
+            self.key_chat_messagePanelSend = None
+            self.ThreadClass = None
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("hide_send_button_bg", False):
+        if not self.setting_hide_bg:
             return
             
         try:
@@ -20,16 +23,25 @@ class GetThemedColorHook(MethodHook):
                 for i in range(min(15, len(stack))):
                     element = stack[i]
                     if element.getMethodName() == "dispatchDraw" and "ChatActivityEnterView" in element.getClassName():
-                        param.setResult(0) # 0 is transparent color
+                        message_edit_text = get_private_field(param.thisObject, "messageEditText")
+                        if message_edit_text is not None:
+                            text = message_edit_text.getText()
+                            if text is not None and text.length() > 0:
+                                return
+                        param.setResult(0)
                         return
-        except Exception as e:
+        except Exception:
+            return
 
 class SendButtonOnDrawHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
+        self.setting_hide_bg = self.plugin.get_setting("hide_send_button_bg", False)
+        self.setting_legacy_icons = self.plugin.get_setting("legacy_outline_icons", True)
         try:
             self.SendButtonClass = find_class("org.telegram.ui.Components.ChatActivityEnterView$SendButton")
-        except Exception as e:
+        except Exception:
+            return
 
     def get_target_class(self):
         return "org.telegram.ui.Components.ChatActivityEnterView$SendButton"
@@ -38,7 +50,7 @@ class SendButtonOnDrawHook(MethodHook):
         return "onDraw"
 
     def before_hooked_method(self, param):
-        if not self.plugin.get_setting("hide_send_button_bg", False):
+        if not self.setting_hide_bg:
             return
 
         try:
@@ -67,11 +79,32 @@ class SendButtonOnDrawHook(MethodHook):
                     if paint:
                         self.old_color = paint.getColor()
                         paint.setColor(0) # transparent
+                    
+                    if self.setting_legacy_icons:
+                        drawable = get_private_field(param.thisObject, "drawable")
+                        micDrawable = get_private_field(outer, "micDrawable")
+                        cameraDrawable = get_private_field(outer, "cameraDrawable")
+                        
+                        if drawable is not None:
+                            if micDrawable is not None and drawable == micDrawable:
+                                micOutline = get_private_field(outer, "micOutline")
+                                if micOutline is not None:
+                                    set_private_field(param.thisObject, "drawable", micOutline)
+                                    self.old_drawable = micDrawable
+                            elif cameraDrawable is not None and drawable == cameraDrawable:
+                                cameraOutline = get_private_field(outer, "cameraOutline")
+                                if cameraOutline is not None:
+                                    set_private_field(param.thisObject, "drawable", cameraOutline)
+                                    self.old_drawable = cameraDrawable
                 else:
                     self.old_color = None
+                    self.old_drawable = None
             else:
-        except Exception as e:
+                self.old_color = None
+                self.old_drawable = None
+        except Exception:
             self.old_color = None
+            self.old_drawable = None
 
     def after_hooked_method(self, param):
         if getattr(self, "old_color", None) is not None:
@@ -79,7 +112,13 @@ class SendButtonOnDrawHook(MethodHook):
                 paint = get_private_field(param.thisObject, "backgroundPaint")
                 if paint:
                     paint.setColor(self.old_color)
-            except Exception as e:
+            except Exception:
+                pass
+                
+        if getattr(self, "old_drawable", None) is not None:
+            try:
+                set_private_field(param.thisObject, "drawable", self.old_drawable)
+            except Exception:
                 pass
 
 class ChatActivityEnterViewUpdateColorsHook(MethodHook):
