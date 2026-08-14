@@ -7,7 +7,7 @@ class CameraTileSingleCellHook(MethodHook):
         self.plugin = plugin
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("camera_tile_single_cell", True):
+        if not self.plugin.get_setting("camera_tile_single_cell", False):
             return
 
         try:

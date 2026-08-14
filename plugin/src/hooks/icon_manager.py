@@ -6,7 +6,7 @@ class IsBasePackOnlyHook(MethodHook):
         self.plugin = plugin
 
     def before_hooked_method(self, param):
-        if not self.plugin.get_setting("legacy_outline_icons", True):
+        if not self.plugin.get_setting("legacy_outline_icons", False):
             return
             
         stack = Thread.currentThread().getStackTrace()

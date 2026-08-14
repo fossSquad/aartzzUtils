@@ -25,7 +25,7 @@ class WallpaperSourceDimHook(MethodHook):
         self.dim_by_provider = OrderedDict()
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("blur_dim_wallpaper", True):
+        if not self.plugin.get_setting("blur_dim_wallpaper", False):
             return
 
         try:
@@ -48,7 +48,7 @@ class WallpaperColorDimHook(MethodHook):
         self.source_hook = source_hook
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("blur_dim_wallpaper", True):
+        if not self.plugin.get_setting("blur_dim_wallpaper", False):
             return
 
         try:

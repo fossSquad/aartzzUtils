@@ -4,7 +4,7 @@ from hook_utils import get_private_field
 class SpringAnimationsHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
-        self.setting_disable_spring = self.plugin.get_setting("disable_spring_shrink", True)
+        self.setting_disable_spring = self.plugin.get_setting("disable_spring_shrink", False)
 
     def before_hooked_method(self, param):
         if self.setting_disable_spring:
@@ -26,7 +26,7 @@ class VoiceVideoAnimHook(MethodHook):
         self.plugin = plugin
         
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("voice_video_anim", True):
+        if not self.plugin.get_setting("voice_video_anim", False):
             return
             
         try:

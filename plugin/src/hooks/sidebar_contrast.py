@@ -6,5 +6,6 @@ class ImmersiveDrawerHook(MethodHook):
         self.plugin = plugin
 
     def before_hooked_method(self, param):
-        if self.plugin.get_setting("sidebar_contrast", True):
+        if self.plugin.get_setting("sidebar_contrast", False):
             param.setResult(False)
+

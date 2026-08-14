@@ -8,7 +8,7 @@ class ComposeButtonHook(MethodHook):
         self.theme = find_class("org.telegram.ui.ActionBar.Theme")
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("compose_pencil", True):
+        if not self.plugin.get_setting("compose_pencil", False):
             return
 
         try:

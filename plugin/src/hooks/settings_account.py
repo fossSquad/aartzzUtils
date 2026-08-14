@@ -9,7 +9,7 @@ class SettingsAccountInfoHook(MethodHook):
         self.plugin = plugin
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("settings_account_info", True):
+        if not self.plugin.get_setting("settings_account_info", False):
             return
 
         try:

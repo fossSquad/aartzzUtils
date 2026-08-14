@@ -65,6 +65,8 @@ class ChatInputBubbleHook(MethodHook):
         self.plugin = plugin
 
     def after_hooked_method(self, param):
+        if not self.plugin.get_setting("rectangular_ui", False):
+            return
         try:
             drawable = param.args[0]
             _flatten_drawable(drawable)
@@ -83,6 +85,8 @@ class ChatInputUnderKeyboardHook(MethodHook):
         self.plugin = plugin
 
     def after_hooked_method(self, param):
+        if not self.plugin.get_setting("rectangular_ui", False):
+            return
         try:
             drawable = param.args[0]
             _flatten_drawable(drawable)
@@ -97,6 +101,8 @@ class ChatInputContainerPositionHook(MethodHook):
         self.plugin = plugin
 
     def after_hooked_method(self, param):
+        if not self.plugin.get_setting("rectangular_ui", False):
+            return
         try:
             container = param.thisObject
             
@@ -122,6 +128,8 @@ class ChatInputDispatchDrawHook(MethodHook):
         self.plugin = plugin
         
     def before_hooked_method(self, param):
+        if not self.plugin.get_setting("rectangular_ui", False):
+            return
         try:
             container = param.thisObject
             self.original_height = _get_field(container, "inputBubbleHeightRound")
@@ -157,6 +165,8 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
         self._saved_divider_alpha = None
 
     def before_hooked_method(self, param):
+        if not self.plugin.get_setting("rectangular_ui", False):
+            return
         try:
             layout = param.thisObject
             bg = _get_field(layout, "backgroundDrawable")
@@ -237,6 +247,8 @@ class TopPanelPaddingHook(MethodHook):
         self.plugin = plugin
         
     def before_hooked_method(self, param):
+        if not self.plugin.get_setting("rectangular_ui", False):
+            return
         # Zero out ONLY paddingTop (index 1) to eliminate the gap between the
         # action bar and the pinned content. paddingBottom (index 3) is kept
         # so the panel height stays the same as vanilla.
@@ -255,9 +267,12 @@ class ActionBarSetupGlassHook(MethodHook):
         self.plugin = plugin
         
     def after_hooked_method(self, param):
+        if not self.plugin.get_setting("rectangular_ui", False):
+            return
         try:
             bar = param.thisObject
             factory = param.args[0]
+
             provider = param.args[1]
             
             # Create a single full-width BlurredBackgroundDrawable

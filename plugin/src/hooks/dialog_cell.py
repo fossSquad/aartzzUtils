@@ -89,7 +89,7 @@ class DialogCellBuildLayoutHook(MethodHook):
             is_pinned = bool(dp) or bool(dpf)
             original_flags = (bool(dp), bool(dpf))
             
-            if is_pinned and self.plugin.get_setting("legacy_pin_pos", True):
+            if is_pinned and self.plugin.get_setting("legacy_pin_pos", False):
                 self.fields.set(this, "drawPin", False)
                 self.fields.set(this, "drawPinForced", False)
                 self.alpha_hidden_map.set(cell_id, original_flags)
@@ -112,7 +112,7 @@ class DialogCellBuildLayoutHook(MethodHook):
                 pass
 
         is_pinned = original_flags[0] or original_flags[1]
-        if not is_pinned or not self.plugin.get_setting("legacy_pin_pos", True):
+        if not is_pinned or not self.plugin.get_setting("legacy_pin_pos", False):
             _SHARED_LAYOUT_CACHE.pop(cell_id, None)
             return
 
@@ -208,8 +208,8 @@ class DialogCellOnDrawHook(MethodHook):
         self.key_chats_pinnedOverlay = getattr(self.ThemeProxy, "key_chats_pinnedOverlay", None)
         self.bg_paint = None
         
-        self.setting_legacy_pin_pos = self.plugin.get_setting("legacy_pin_pos", True)
-        self.setting_pinned_bg = self.plugin.get_setting("pinned_bg", True)
+        self.setting_legacy_pin_pos = self.plugin.get_setting("legacy_pin_pos", False)
+        self.setting_pinned_bg = self.plugin.get_setting("pinned_bg", False)
 
     def before_hooked_method(self, param):
         this = param.thisObject

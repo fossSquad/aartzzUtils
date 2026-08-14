@@ -37,7 +37,7 @@ class SendButtonOnDrawHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
         self.setting_hide_bg = self.plugin.get_setting("hide_send_button_bg", False)
-        self.setting_legacy_icons = self.plugin.get_setting("legacy_outline_icons", True)
+        self.setting_legacy_icons = self.plugin.get_setting("legacy_outline_icons", False)
         try:
             self.SendButtonClass = find_class("org.telegram.ui.Components.ChatActivityEnterView$SendButton")
         except Exception:

@@ -7,7 +7,7 @@ class ProfileLevelsHook(MethodHook):
         self.plugin = plugin
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("hide_profile_levels", True):
+        if not self.plugin.get_setting("hide_profile_levels", False):
             return
 
         try:

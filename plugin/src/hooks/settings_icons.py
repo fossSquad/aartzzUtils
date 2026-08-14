@@ -7,7 +7,7 @@ class SettingsIconsHook(MethodHook):
         self.plugin = plugin
 
     def after_hooked_method(self, param):
-        if not self.plugin.get_setting("legacy_settings_icons", True):
+        if not self.plugin.get_setting("legacy_settings_icons", False):
             return
 
         try:
