@@ -217,14 +217,16 @@ class TopPanelPaddingHook(MethodHook):
         self.plugin = plugin
         
     def before_hooked_method(self, param):
+        # Zero out top (index 1) and bottom (index 3) to remove the gap between
+        # action bar and pinned content. Left/right (0, 2) are kept as-is because
+        # checkBoundsAndClipping compensates for them in setBounds.
         try:
             from java.lang import Integer
-            param.args[0] = Integer(0)
-            param.args[1] = Integer(0)
-            param.args[2] = Integer(0)
-            param.args[3] = Integer(0)
+            param.args[1] = Integer(0)   # paddingTop  → 0
+            param.args[3] = Integer(0)   # paddingBottom → 0
         except Exception:
             pass
+
 
 
 

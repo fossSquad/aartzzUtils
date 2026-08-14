@@ -25,6 +25,7 @@ from .hooks import (
     ChatInputDispatchDrawHook,
     ChatActivityTopPanelBoundsHook,
     ActionBarSetupGlassHook,
+    TopPanelPaddingHook,
 )
 from .ui import SettingsMixin
 
@@ -167,6 +168,7 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
         if ChatActivityTopPanelClass:
             try:
                 self.hook_all_methods(ChatActivityTopPanelClass, "dispatchDraw", ChatActivityTopPanelBoundsHook(self))
+                self.hook_all_methods(ChatActivityTopPanelClass, "setPadding", TopPanelPaddingHook(self))
             except Exception as e:
                 print("Failed to hook ChatActivityTopPanelLayout", e)
             
