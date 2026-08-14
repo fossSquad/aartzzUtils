@@ -150,10 +150,11 @@ class ChatInputDispatchDrawHook(MethodHook):
             pass
 
 class ChatActivityTopPanelBoundsHook(MethodHook):
-    """Stretch the clipPath and backgroundDrawable bounds before dispatchDraw to fill gaps."""
+    """Stretch the clipPath and backgroundDrawable bounds before dispatchDraw to fill gaps and suppress top divider."""
 
     def __init__(self, plugin):
         self.plugin = plugin
+        self._saved_divider_alpha = None
 
     def before_hooked_method(self, param):
         try:
@@ -180,8 +181,6 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     pass
                 
                 # 2. Zero radius via the PUBLIC setRadius() API.
-                #    Internal boundProps.build() is package-private and silently fails from Python.
-                #    setRadius() calls build() from within the Java class where it IS accessible.
                 try:
                     bg.setRadius(0.0)
                 except Exception:
@@ -206,11 +205,30 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     )
                 except Exception:
                     pass
+
+            # 4. Suppress the 1px forcedDividerPaint line drawn by dispatchDraw at y=0
+            try:
+                from hook_utils import find_class
+                Theme = find_class("org.telegram.ui.ActionBar.Theme")
+                paint = getattr(Theme, "forcedDividerPaint", None)
+                if paint is not None:
+                    self._saved_divider_alpha = int(paint.getAlpha())
+                    paint.setAlpha(0)
+            except Exception:
+                self._saved_divider_alpha = None
         except Exception:
             pass
 
-
-
+    def after_hooked_method(self, param):
+        try:
+            if self._saved_divider_alpha is not None:
+                from hook_utils import find_class
+                Theme = find_class("org.telegram.ui.ActionBar.Theme")
+                paint = getattr(Theme, "forcedDividerPaint", None)
+                if paint is not None:
+                    paint.setAlpha(self._saved_divider_alpha)
+        except Exception:
+            pass
 
 
 class TopPanelPaddingHook(MethodHook):
@@ -273,6 +291,17 @@ class ActionBarSetupGlassHook(MethodHook):
             except Exception:
                 _set_field(bar, "glassMode", False)
 
+            # Disable shadow/divider drawn below ActionBar
+            try:
+                from java.lang import Float
+                bar.setGlassShadowAlpha(Float(0.0))
+                bar.setShadowAlpha(Float(0.0))
+            except Exception:
+                try:
+                    bar.setGlassShadowAlpha(0.0)
+                    bar.setShadowAlpha(0.0)
+                except Exception:
+                    pass
                 
             # Clear out the old floating pills just in case
             _set_field(bar, "glassDrawable", None)
