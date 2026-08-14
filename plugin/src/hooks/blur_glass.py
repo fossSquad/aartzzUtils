@@ -161,21 +161,24 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
             bg = _get_field(layout, "backgroundDrawable")
             
             if bg is not None:
-                bounds = bg.getBounds()
+                # Snapshot BEFORE any setBounds to prevent per-frame accumulation.
+                # We only extend horizontally (to kill the side gaps); vertical
+                # is already correct from checkBoundsAndClipping.
+                raw = bg.getBounds()
+                curr_top = int(raw.top)
+                curr_bottom = int(raw.bottom)
                 
                 try:
-                    trans_y = float(layout.getTranslationY())
-                    top_bound = int(-trans_y)
-                    if top_bound > 0:
-                        top_bound = 0
-                        
-                    try:
-                        from org.telegram.messenger import AndroidUtilities
-                        padding = AndroidUtilities.dp(8.0)
-                    except Exception:
-                        padding = 0
-                        
-                    bg.setBounds(-padding, top_bound - padding, int(layout.getMeasuredWidth()) + padding, int(bounds.bottom) + padding)
+                    from org.telegram.messenger import AndroidUtilities
+                    # 7dp matches the drawable's own inner padding that checkBoundsAndClipping
+                    # already compensates for, so this is net-zero in terms of content position
+                    # but pushes the blur sample out to the screen edge.
+                    side_ext = AndroidUtilities.dp(7.0)
+                except Exception:
+                    side_ext = 0
+                
+                try:
+                    bg.setBounds(-side_ext, curr_top, int(layout.getMeasuredWidth()) + side_ext, curr_bottom)
                 except Exception:
                     pass
                 
@@ -187,7 +190,7 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                         radii[i] = 0.0
                         shader_radii[i] = 0.0
                     bound_props.build()
-                except Exception as e:
+                except Exception:
                     pass
                         
             clipPath = _get_field(layout, "clipPath")
@@ -195,13 +198,14 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                 try:
                     from hook_utils import find_class
                     PathDirection = find_class("android.graphics.Path$Direction")
+                    new_bounds = bg.getBounds()
                     clipPath.reset()
-                    bounds = bg.getBounds()
-                    clipPath.addRect(float(bounds.left), float(bounds.top), float(bounds.right), float(bounds.bottom), PathDirection.CW)
+                    clipPath.addRect(float(new_bounds.left), float(new_bounds.top), float(new_bounds.right), float(new_bounds.bottom), PathDirection.CW)
                 except Exception:
                     pass
         except Exception:
             pass
+
 
 class TopPanelPaddingHook(MethodHook):
     """Force ChatActivityTopPanelLayout padding to 0 to stretch to edges."""
