@@ -155,7 +155,7 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
 
-    def after_hooked_method(self, param):
+    def before_hooked_method(self, param):
         try:
             layout = param.thisObject
             bg = _get_field(layout, "backgroundDrawable")
@@ -193,10 +193,11 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
             clipPath = _get_field(layout, "clipPath")
             if clipPath is not None and bg is not None:
                 try:
-                    from android.graphics import Path
+                    from hook_utils import find_class
+                    PathDirection = find_class("android.graphics.Path$Direction")
+                    clipPath.reset()
                     bounds = bg.getBounds()
-                    clipPath.rewind()
-                    clipPath.addRect(0.0, float(bounds.top), float(bounds.right), float(bounds.bottom), Path.Direction.CW)
+                    clipPath.addRect(float(bounds.left), float(bounds.top), float(bounds.right), float(bounds.bottom), PathDirection.CW)
                 except Exception:
                     pass
         except Exception:

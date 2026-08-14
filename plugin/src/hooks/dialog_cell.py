@@ -284,8 +284,7 @@ class DialogCellOnDrawHook(MethodHook):
                 except Exception:
                     pass
 
-            # Only move pin for normal dialogs. Forums draw their native pin fine.
-            if is_pinned and self.setting_legacy_pin_pos and not is_topic:
+            if is_pinned and self.setting_legacy_pin_pos:
                 try:
                     self._set_f(self.f_drawPin, this, False)
                     self._set_f(self.f_drawPinForced, this, False)
@@ -314,8 +313,7 @@ class DialogCellOnDrawHook(MethodHook):
         if not is_pinned:
             return
 
-        is_topic = self._get_f(self.f_isTopic, this, False)
-        if not self.setting_legacy_pin_pos or is_topic:
+        if not self.setting_legacy_pin_pos:
             return
 
         layout = _SHARED_LAYOUT_CACHE.get(cell_id)
