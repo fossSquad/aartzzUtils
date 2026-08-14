@@ -22,7 +22,7 @@ from .hooks import (
     ChatInputBubbleHook,
     ChatInputUnderKeyboardHook,
     ChatInputContainerPositionHook,
-    ChatInputContainerHeightHook,
+    ChatInputDispatchDrawHook,
     ChatActivityTopPanelBoundsHook,
     ActionBarSetupGlassHook,
 )
@@ -157,11 +157,9 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
         if ChatInputContainerClass:
             try:
                 self.hook_all_methods(ChatInputContainerClass, "setInputIslandBubbleDrawable", ChatInputBubbleHook(self))
-                height_hook = ChatInputContainerHeightHook(self)
-                self.hook_all_methods(ChatInputContainerClass, "setBlurredBottomHeight", height_hook)
-                self.hook_all_methods(ChatInputContainerClass, "checkBlurredHeight", height_hook)
                 self.hook_all_methods(ChatInputContainerClass, "setUnderKeyboardBackgroundDrawable", ChatInputUnderKeyboardHook(self))
                 self.hook_all_methods(ChatInputContainerClass, "checkViewsPositions", ChatInputContainerPositionHook(self))
+                self.hook_all_methods(ChatInputContainerClass, "dispatchDraw", ChatInputDispatchDrawHook(self))
             except Exception as e:
                 print("Failed to hook ChatInputContainer", e)
             

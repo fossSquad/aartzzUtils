@@ -91,12 +91,7 @@ class ChatInputUnderKeyboardHook(MethodHook):
 
 
 class ChatInputContainerPositionHook(MethodHook):
-    """Override checkViewsPositions to remove the 9dp floating gap.
-
-    Original: inputIslandBubbleContainer.setTranslationY(-maxBottomInset - dp(9))
-    We want:  inputIslandBubbleContainer.setTranslationY(-maxBottomInset)
-    This makes the input bar sit flush at the bottom instead of floating.
-    """
+    """Force the chat input container blur to stretch horizontally."""
 
     def __init__(self, plugin):
         self.plugin = plugin
@@ -104,50 +99,58 @@ class ChatInputContainerPositionHook(MethodHook):
     def after_hooked_method(self, param):
         try:
             container = param.thisObject
-            island = _get_field(container, "inputIslandBubbleContainer")
-            if island is None:
-                return
-            max_bottom_inset = _get_field(container, "maxBottomInset")
-            if max_bottom_inset is None:
-                max_bottom_inset = 0.0
-            island.setTranslationY(-float(max_bottom_inset))
+            
+            # Make blur stretch horizontally
+            try:
+                from java.lang import Float
+                _set_field(container, "inputBubbleOffsetLeft", Float(0.0))
+                _set_field(container, "inputBubbleOffsetRight", Float(0.0))
+            except Exception:
+                try:
+                    _set_field(container, "inputBubbleOffsetLeft", 0.0)
+                    _set_field(container, "inputBubbleOffsetRight", 0.0)
+                except Exception:
+                    pass
         except Exception:
             pass
 
 
-class ChatInputContainerHeightHook(MethodHook):
-    """Decrease the blurred background height by 9dp to match the flush views position."""
+class ChatInputDispatchDrawHook(MethodHook):
+    """Stretch the chat input blur vertically to cover the navbar during draw."""
 
     def __init__(self, plugin):
         self.plugin = plugin
-
+        
     def before_hooked_method(self, param):
         try:
-            from org.telegram.messenger import AndroidUtilities
-            from java.lang import Float
+            container = param.thisObject
+            self.original_height = _get_field(container, "inputBubbleHeightRound")
+            max_bottom = _get_field(container, "maxBottomInset")
             
-            if param.method.getName() == "setBlurredBottomHeight":
-                val = param.args[0]
-                param.args[0] = Float(float(val) - AndroidUtilities.dp(9.0))
+            if self.original_height is not None and max_bottom is not None:
+                from org.telegram.messenger import AndroidUtilities
+                from java.lang import Integer
+                
+                # The gap below the input field (maxBottomInset + 9dp)
+                gap = int(float(max_bottom)) + AndroidUtilities.dp(9.0)
+                
+                # Add gap to inputBubbleHeightRound so the blur stretches DOWN to the screen edge.
+                # Do NOT modify currentBlurredHeight, so tmpRect.top stays locked to the text field!
+                _set_field(container, "inputBubbleHeightRound", Integer(int(self.original_height) + gap))
         except Exception:
             pass
             
     def after_hooked_method(self, param):
         try:
-            if param.method.getName() == "checkBlurredHeight":
-                from org.telegram.messenger import AndroidUtilities
-                container = param.thisObject
-                current_height = _get_field(container, "currentBlurredHeight")
-                if current_height is not None:
-                    _set_field(container, "currentBlurredHeight", int(current_height) - AndroidUtilities.dp(9.0))
+            container = param.thisObject
+            from java.lang import Integer
+            if hasattr(self, "original_height") and self.original_height is not None:
+                _set_field(container, "inputBubbleHeightRound", Integer(int(self.original_height)))
         except Exception:
             pass
 
-
-
-
 class ChatActivityTopPanelBoundsHook(MethodHook):
-    """Flatten the clipPath and backgroundDrawable radius before dispatchDraw."""
+    """Stretch the clipPath and backgroundDrawable bounds before dispatchDraw to fill gaps."""
 
     def __init__(self, plugin):
         self.plugin = plugin
@@ -155,18 +158,20 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
     def before_hooked_method(self, param):
         try:
             layout = param.thisObject
-            
-            # Flatten clipPath
-            clipPath = _get_field(layout, "clipPath")
-            clipRectF = _get_field(layout, "clipRectF")
-            if clipPath is not None and clipRectF is not None:
-                from android.graphics import Path
-                clipPath.rewind()
-                clipPath.addRect(clipRectF, Path.Direction.CW)
-            
-            # Flatten background blur radius
             bg = _get_field(layout, "backgroundDrawable")
+            
             if bg is not None:
+                bounds = bg.getBounds()
+                
+                try:
+                    trans_y = float(layout.getTranslationY())
+                    top_bound = int(-trans_y)
+                    if top_bound > 0:
+                        top_bound = 0
+                    bg.setBounds(0, top_bound, int(layout.getMeasuredWidth()), int(bounds.bottom))
+                except Exception:
+                    pass
+                
                 try:
                     from java.lang import Float
                     bg.setRadius(Float(0.1))
@@ -175,6 +180,31 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                         bg.setRadius(0.1)
                     except Exception:
                         pass
+                        
+            clipPath = _get_field(layout, "clipPath")
+            if clipPath is not None and bg is not None:
+                try:
+                    from android.graphics import Path
+                    bounds = bg.getBounds()
+                    clipPath.rewind()
+                    clipPath.addRect(0.0, float(bounds.top), float(bounds.right), float(bounds.bottom), Path.Direction.CW)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+class TopPanelPaddingHook(MethodHook):
+    """Force ChatActivityTopPanelLayout padding to 0 to stretch to edges."""
+    def __init__(self, plugin):
+        self.plugin = plugin
+        
+    def before_hooked_method(self, param):
+        try:
+            from java.lang import Integer
+            param.args[0] = Integer(0)
+            param.args[1] = Integer(0)
+            param.args[2] = Integer(0)
+            param.args[3] = Integer(0)
         except Exception:
             pass
 
