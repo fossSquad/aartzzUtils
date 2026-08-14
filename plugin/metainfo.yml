@@ -1,6 +1,6 @@
-id: legacyutils
-name: legacyUtils
-description: "{plugin_description}\n\n[Source code](https://github.com/fossSquad/legacyUtils)"
+id: aartzzutils
+name: aartzzUtils
+description: "{plugin_description}\n\n[Source code](https://github.com/fossSquad/aartzzUtils)"
 author: "@fossSquad | @migor1103"
 version: "1.0.0"
 app_version: ">=12.9.0"

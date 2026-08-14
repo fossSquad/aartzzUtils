@@ -14,4 +14,23 @@ hide_pin_if_unread_desc: Hides the pin icon when the chat has unread messages
 
 hide_send_button_bg_title: Hide Voice/Video Outline
 hide_send_button_bg_desc: Removes the background circle from the voice/video recording button
-
+legacy_outline_icons_title: Use Legacy Outline Icons
+legacy_outline_icons_desc: Restores the legacy outline icon pack in the chat input
+disable_spring_shrink_title: Disable Spring Shrink Transitions
+disable_spring_shrink_desc: Restores the non-shrinking transition animation
+hide_profile_levels_title: Hide Profile Levels
+hide_profile_levels_desc: Hides the star rating level from profiles
+compose_pencil_title: Use Pencil Compose Button
+compose_pencil_desc: Replaces the bottom chat-plus button with a pencil
+rectangular_ui_title: Rectangular Chat UI
+rectangular_ui_desc: Disables rounded corners for the chat header and message input field
+sidebar_contrast_title: Darker Immersive Sidebar
+sidebar_contrast_desc: Use a dark scrim behind the immersive sidebar
+settings_account_info_title: Show Account Details
+settings_account_info_desc: Show account bio and numeric ID above settings
+legacy_settings_icons_title: Legacy Settings Icons
+legacy_settings_icons_desc: Use neutral monochrome backgrounds for settings icons
+camera_tile_single_cell_title: Single-cell camera tile
+camera_tile_single_cell_desc: Keep the camera tile to one grid cell in the photo picker
+blur_dim_wallpaper_title: Dim wallpaper blur colors
+blur_dim_wallpaper_desc: Apply wallpaper dimming to the top and bottom blur colors

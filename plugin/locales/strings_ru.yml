@@ -14,4 +14,23 @@ hide_pin_if_unread_desc: Прячет иконку закрепа, если в �
 
 hide_send_button_bg_title: Скрыть обводку микрофона
 hide_send_button_bg_desc: Убирает фоновый круг с кнопки записи голосовых и видеосообщений
-
+legacy_outline_icons_title: Использовать старые контурные иконки
+legacy_outline_icons_desc: Возвращает старый набор контурных иконок в поле ввода чата
+disable_spring_shrink_title: Отключить пружинное уменьшение
+disable_spring_shrink_desc: Возвращает переходы без уменьшения окон
+hide_profile_levels_title: Скрывать уровни профиля
+hide_profile_levels_desc: Скрывает уровень звездного рейтинга в профилях
+compose_pencil_title: Кнопка создания в виде карандаша
+compose_pencil_desc: Заменяет нижнюю кнопку чата с плюсом на карандаш
+rectangular_ui_title: Прямоугольный интерфейс в чате
+rectangular_ui_desc: Делает шапку чата и поле ввода прямоугольными (без закруглений)
+sidebar_contrast_title: Более темный иммерсивный сайдбар
+sidebar_contrast_desc: Использует темное затемнение за сайдбаром
+settings_account_info_title: Показывать данные аккаунта
+settings_account_info_desc: Показывает био и числовой ID над настройками
+legacy_settings_icons_title: Старые иконки настроек
+legacy_settings_icons_desc: Использует нейтральные монохромные фоны для иконок
+camera_tile_single_cell_title: Камера в одной ячейке
+camera_tile_single_cell_desc: Оставляет плитку камеры в одной ячейке выбора фото
+blur_dim_wallpaper_title: Затемнять цвета блюра
+blur_dim_wallpaper_desc: Применяет затемнение обоев к верхнему и нижнему блюру

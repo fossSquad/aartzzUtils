@@ -14,4 +14,23 @@ hide_pin_if_unread_desc: Ховає іконку закріпу, якщо в ч�
 
 hide_send_button_bg_title: Сховати обводку мікрофона
 hide_send_button_bg_desc: Прибирає фонове коло з кнопки запису голосових та відеоповідомлень
-
+legacy_outline_icons_title: Використовувати старі контурні іконки
+legacy_outline_icons_desc: Повертає старий набір контурних іконок у полі вводу чату
+disable_spring_shrink_title: Вимкнути пружне зменшення
+disable_spring_shrink_desc: Повертає переходи без зменшення вікон
+hide_profile_levels_title: Ховати рівні профілю
+hide_profile_levels_desc: Ховає рівень зіркового рейтингу у профілях
+compose_pencil_title: Кнопка створення у вигляді олівця
+compose_pencil_desc: Замінює нижню кнопку чату з плюсом на олівець
+rectangular_ui_title: Прямокутний інтерфейс у чаті
+rectangular_ui_desc: Робить шапку чату та поле вводу прямокутними (без заокруглень)
+sidebar_contrast_title: Темніший іммерсивний сайдбар
+sidebar_contrast_desc: Використовує темне затемнення позаду сайдбара
+settings_account_info_title: Показувати дані акаунта
+settings_account_info_desc: Показує біо та числовий ID над налаштуваннями
+legacy_settings_icons_title: Легасі-іконки налаштувань
+legacy_settings_icons_desc: Використовує нейтральні монохромні фони для іконок
+camera_tile_single_cell_title: Камера в одній клітинці
+camera_tile_single_cell_desc: Залишає плитку камери в одній клітинці вибору фото
+blur_dim_wallpaper_title: Затемнювати кольори блюру
+blur_dim_wallpaper_desc: Застосовує затемнення обоїв до верхнього та нижнього блюру
