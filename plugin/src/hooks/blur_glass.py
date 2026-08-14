@@ -131,8 +131,8 @@ class ChatInputDispatchDrawHook(MethodHook):
                 from org.telegram.messenger import AndroidUtilities
                 from java.lang import Integer
                 
-                # The gap below the input field (maxBottomInset + 9dp)
-                gap = int(float(max_bottom)) + AndroidUtilities.dp(9.0)
+                # The gap below the input field (9dp)
+                gap = AndroidUtilities.dp(9.0)
                 
                 # Add gap to inputBubbleHeightRound so the blur stretches DOWN to the screen edge.
                 # Do NOT modify currentBlurredHeight, so tmpRect.top stays locked to the text field!
@@ -155,7 +155,7 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
 
-    def before_hooked_method(self, param):
+    def after_hooked_method(self, param):
         try:
             layout = param.thisObject
             bg = _get_field(layout, "backgroundDrawable")
@@ -168,18 +168,24 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     top_bound = int(-trans_y)
                     if top_bound > 0:
                         top_bound = 0
-                    bg.setBounds(0, top_bound, int(layout.getMeasuredWidth()), int(bounds.bottom))
+                        
+                    padding = 0
+                    try:
+                        padding = int(bg.boundProps.padding)
+                    except Exception:
+                        pass
+                        
+                    bg.setBounds(-padding, top_bound - padding, int(layout.getMeasuredWidth()) + padding, int(bounds.bottom) + padding)
                 except Exception:
                     pass
                 
                 try:
-                    from java.lang import Float
-                    bg.setRadius(Float(0.1))
-                except Exception:
-                    try:
-                        bg.setRadius(0.1)
-                    except Exception:
-                        pass
+                    for i in range(8):
+                        bg.boundProps.radii[i] = 0.0
+                        bg.boundProps.shaderRadii[i] = 0.0
+                    bg.boundProps.build()
+                except Exception as e:
+                    pass
                         
             clipPath = _get_field(layout, "clipPath")
             if clipPath is not None and bg is not None:

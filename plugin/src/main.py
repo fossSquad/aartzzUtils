@@ -166,7 +166,7 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
         ChatActivityTopPanelClass = JavaClass.forName("org.telegram.ui.Components.ChatActivityTopPanelLayout")
         if ChatActivityTopPanelClass:
             try:
-                self.hook_all_methods(ChatActivityTopPanelClass, "dispatchDraw", ChatActivityTopPanelBoundsHook(self))
+                self.hook_all_methods(ChatActivityTopPanelClass, "checkBoundsAndClipping", ChatActivityTopPanelBoundsHook(self))
             except Exception as e:
                 print("Failed to hook ChatActivityTopPanelLayout", e)
             

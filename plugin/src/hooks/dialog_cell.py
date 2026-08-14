@@ -224,22 +224,27 @@ class DialogCellOnDrawHook(MethodHook):
             original_flags = (bool(dp), bool(dpf))
 
             if is_pinned and self.setting_pinned_bg:
-                canvas = param.args[0]
-                if self.bg_paint is None:
-                    from android.graphics import Paint
-                    self.bg_paint = Paint()
                 try:
-                    try:
-                        rp = self.fields.get(this, "resourcesProvider")
-                        color = self.ThemeProxy.getColor(self.ThemeProxy.key_chats_pinnedOverlay, rp)
-                    except Exception:
-                        color = self.ThemeProxy.getColor(self.ThemeProxy.key_chats_pinnedOverlay)
-                    
-                    self.bg_paint.setColor(color)
-                    self.bg_paint.setAlpha(15)
-                    canvas.drawRect(0.0, 0.0, float(this.getMeasuredWidth()), float(this.getMeasuredHeight()), self.bg_paint)
-                except Exception as e:
-                    self.plugin.log(f"Highlight error: {e}")
+                    is_topic = self.fields.get(this, "isTopic", False)
+                    if not is_topic:
+                        canvas = param.args[0]
+                        if self.bg_paint is None:
+                            from android.graphics import Paint
+                            self.bg_paint = Paint()
+                        try:
+                            try:
+                                rp = self.fields.get(this, "resourcesProvider")
+                                color = self.ThemeProxy.getColor(self.ThemeProxy.key_chats_pinnedOverlay, rp)
+                            except Exception:
+                                color = self.ThemeProxy.getColor(self.ThemeProxy.key_chats_pinnedOverlay)
+                            
+                            self.bg_paint.setColor(color)
+                            self.bg_paint.setAlpha(15)
+                            canvas.drawRect(0.0, 0.0, float(this.getMeasuredWidth()), float(this.getMeasuredHeight()), self.bg_paint)
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
 
             if is_pinned and self.setting_legacy_pin_pos:
                 try:
