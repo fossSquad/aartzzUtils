@@ -205,7 +205,12 @@ class DialogCellOnDrawHook(MethodHook):
         self.state_map = _BoundedState()
         self.fields = _FieldCache()
         self.ThemeProxy = find_class("org.telegram.ui.ActionBar.Theme")
-        self.bg_paint = None
+        self.key_chats_pinnedOverlay = getattr(self.ThemeProxy, "key_chats_pinnedOverlay", None)
+        try:
+            from android.graphics import Paint
+            self.bg_paint = Paint()
+        except Exception:
+            self.bg_paint = None
         
         self.setting_legacy_pin_pos = self.plugin.get_setting("legacy_pin_pos", True)
         self.setting_pinned_bg = self.plugin.get_setting("pinned_bg", True)
@@ -228,21 +233,24 @@ class DialogCellOnDrawHook(MethodHook):
                     is_topic = self.fields.get(this, "isTopic", False)
                     if not is_topic:
                         canvas = param.args[0]
-                        if self.bg_paint is None:
-                            from android.graphics import Paint
-                            self.bg_paint = Paint()
+                        color = None
                         try:
-                            try:
-                                rp = self.fields.get(this, "resourcesProvider")
-                                color = self.ThemeProxy.getColor(self.ThemeProxy.key_chats_pinnedOverlay, rp)
-                            except Exception:
-                                color = self.ThemeProxy.getColor(self.ThemeProxy.key_chats_pinnedOverlay)
+                            rp = self.fields.get(this, "resourcesProvider")
+                            if self.key_chats_pinnedOverlay is not None:
+                                color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay, rp)
+                        except Exception:
+                            pass
                             
+                        if color is None and self.key_chats_pinnedOverlay is not None:
+                            try:
+                                color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay)
+                            except Exception:
+                                pass
+                                
+                        if color is not None:
                             self.bg_paint.setColor(color)
                             self.bg_paint.setAlpha(15)
                             canvas.drawRect(0.0, 0.0, float(this.getMeasuredWidth()), float(this.getMeasuredHeight()), self.bg_paint)
-                        except Exception:
-                            pass
                 except Exception:
                     pass
 

@@ -131,8 +131,8 @@ class ChatInputDispatchDrawHook(MethodHook):
                 from org.telegram.messenger import AndroidUtilities
                 from java.lang import Integer
                 
-                # The gap below the input field (9dp)
-                gap = AndroidUtilities.dp(9.0)
+                # The gap below the input field (maxBottomInset + 9dp)
+                gap = int(float(max_bottom)) + AndroidUtilities.dp(9.0)
                 
                 # Add gap to inputBubbleHeightRound so the blur stretches DOWN to the screen edge.
                 # Do NOT modify currentBlurredHeight, so tmpRect.top stays locked to the text field!
@@ -169,11 +169,11 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     if top_bound > 0:
                         top_bound = 0
                         
-                    padding = 0
                     try:
-                        padding = int(bg.boundProps.padding)
+                        from org.telegram.messenger import AndroidUtilities
+                        padding = AndroidUtilities.dp(8.0)
                     except Exception:
-                        pass
+                        padding = 0
                         
                     bg.setBounds(-padding, top_bound - padding, int(layout.getMeasuredWidth()) + padding, int(bounds.bottom) + padding)
                 except Exception:
