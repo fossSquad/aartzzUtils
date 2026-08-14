@@ -180,10 +180,13 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     pass
                 
                 try:
+                    bound_props = _get_field(bg, "boundProps")
+                    radii = _get_field(bound_props, "radii")
+                    shader_radii = _get_field(bound_props, "shaderRadii")
                     for i in range(8):
-                        bg.boundProps.radii[i] = 0.0
-                        bg.boundProps.shaderRadii[i] = 0.0
-                    bg.boundProps.build()
+                        radii[i] = 0.0
+                        shader_radii[i] = 0.0
+                    bound_props.build()
                 except Exception as e:
                     pass
                         
