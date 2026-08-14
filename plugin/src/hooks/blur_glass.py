@@ -161,50 +161,54 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
             bg = _get_field(layout, "backgroundDrawable")
             
             if bg is not None:
-                # Snapshot BEFORE any setBounds to prevent per-frame accumulation.
-                # We only extend horizontally (to kill the side gaps); vertical
-                # is already correct from checkBoundsAndClipping.
+                # Snapshot vertical bounds BEFORE any modification (prevents per-frame drift).
                 raw = bg.getBounds()
                 curr_top = int(raw.top)
                 curr_bottom = int(raw.bottom)
                 
                 try:
                     from org.telegram.messenger import AndroidUtilities
-                    # 7dp matches the drawable's own inner padding that checkBoundsAndClipping
-                    # already compensates for, so this is net-zero in terms of content position
-                    # but pushes the blur sample out to the screen edge.
                     side_ext = AndroidUtilities.dp(7.0)
                 except Exception:
                     side_ext = 0
                 
+                # 1. Extend bounds edge-to-edge horizontally.
                 try:
                     bg.setBounds(-side_ext, curr_top, int(layout.getMeasuredWidth()) + side_ext, curr_bottom)
                 except Exception:
                     pass
                 
+                # 2. Zero radius via the PUBLIC setRadius() API.
+                #    Internal boundProps.build() is package-private and silently fails from Python.
+                #    setRadius() calls build() from within the Java class where it IS accessible.
                 try:
-                    bound_props = _get_field(bg, "boundProps")
-                    radii = _get_field(bound_props, "radii")
-                    shader_radii = _get_field(bound_props, "shaderRadii")
-                    for i in range(8):
-                        radii[i] = 0.0
-                        shader_radii[i] = 0.0
-                    bound_props.build()
+                    bg.setRadius(0.0)
                 except Exception:
-                    pass
-                        
+                    try:
+                        from java.lang import Float
+                        bg.setRadius(Float(0.0))
+                    except Exception:
+                        pass
+            
+            # 3. Reset clipPath to a full rect so children are never rounded-clipped.
             clipPath = _get_field(layout, "clipPath")
-            if clipPath is not None and bg is not None:
+            if clipPath is not None:
                 try:
                     from hook_utils import find_class
                     PathDirection = find_class("android.graphics.Path$Direction")
-                    new_bounds = bg.getBounds()
-                    clipPath.reset()
-                    clipPath.addRect(float(new_bounds.left), float(new_bounds.top), float(new_bounds.right), float(new_bounds.bottom), PathDirection.CW)
+                    clipPath.rewind()
+                    clipPath.addRect(
+                        0.0, 0.0,
+                        float(layout.getMeasuredWidth()),
+                        float(layout.getMeasuredHeight()),
+                        PathDirection.CW
+                    )
                 except Exception:
                     pass
         except Exception:
             pass
+
+
 
 
 class TopPanelPaddingHook(MethodHook):
