@@ -160,21 +160,22 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
             layout = param.thisObject
             bg = _get_field(layout, "backgroundDrawable")
             
+            try:
+                from org.telegram.messenger import AndroidUtilities
+                side_ext = AndroidUtilities.dp(7.0)
+                top_ext = AndroidUtilities.dp(20.0)
+            except Exception:
+                side_ext = 0
+                top_ext = 0
+
             if bg is not None:
-                # Snapshot vertical bounds BEFORE any modification (prevents per-frame drift).
+                # Snapshot vertical bottom bound (recomputed freshly by checkBoundsAndClipping).
                 raw = bg.getBounds()
-                curr_top = int(raw.top)
                 curr_bottom = int(raw.bottom)
                 
+                # 1. Extend bounds edge-to-edge horizontally and upwards under ActionBar to kill any gap.
                 try:
-                    from org.telegram.messenger import AndroidUtilities
-                    side_ext = AndroidUtilities.dp(7.0)
-                except Exception:
-                    side_ext = 0
-                
-                # 1. Extend bounds edge-to-edge horizontally.
-                try:
-                    bg.setBounds(-side_ext, curr_top, int(layout.getMeasuredWidth()) + side_ext, curr_bottom)
+                    bg.setBounds(-side_ext, -top_ext, int(layout.getMeasuredWidth()) + side_ext, curr_bottom)
                 except Exception:
                     pass
                 
@@ -190,7 +191,7 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     except Exception:
                         pass
             
-            # 3. Reset clipPath to a full rect so children are never rounded-clipped.
+            # 3. Reset clipPath to a full rect (including top_ext) so children/background are never rounded-clipped.
             clipPath = _get_field(layout, "clipPath")
             if clipPath is not None:
                 try:
@@ -198,8 +199,8 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     PathDirection = find_class("android.graphics.Path$Direction")
                     clipPath.rewind()
                     clipPath.addRect(
-                        0.0, 0.0,
-                        float(layout.getMeasuredWidth()),
+                        -float(side_ext), -float(top_ext),
+                        float(layout.getMeasuredWidth()) + float(side_ext),
                         float(layout.getMeasuredHeight()),
                         PathDirection.CW
                     )
@@ -207,6 +208,7 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
                     pass
         except Exception:
             pass
+
 
 
 
