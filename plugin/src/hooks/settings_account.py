@@ -1,10 +1,9 @@
 from base_plugin import MethodHook
 from hook_utils import get_private_field
+from java.lang import Class as JavaClass
 
 
 class SettingsAccountInfoHook(MethodHook):
-    _marker = "\nID: "
-
     def __init__(self, plugin):
         self.plugin = plugin
 
@@ -39,7 +38,7 @@ class SettingsAccountInfoHook(MethodHook):
 
             phone = getattr(user, "phone", None)
             if not phone or hide_phone:
-                phone = None  # hide the row entirely if phone is hidden
+                phone = None
             else:
                 phone = "+" + str(phone)
                 
@@ -47,26 +46,26 @@ class SettingsAccountInfoHook(MethodHook):
             if username:
                 username = "@" + str(username)
             else:
-                username = None  # no username — skip the row
+                username = None
                 
             about = None
             if full is not None and getattr(full, "about", None):
                 about = str(full.about)
                 
             from org.telegram.ui.Components import UItem
+            from org.telegram.messenger import LocaleController, R
             
-            # Find the insertion index — right before the first section (e.g. ExteraGram settings)
             insert_idx = -1
             for i in range(items.size()):
                 item = items.get(i)
-                if getattr(item, "id", 0) == -1:  # Preferences item
+                if getattr(item, "id", 0) == -1:
                     insert_idx = i
                     break
                     
             if insert_idx == -1:
                 for i in range(items.size()):
                     item = items.get(i)
-                    if getattr(item, "viewType", -1) == 188:  # custom shadow for topView
+                    if getattr(item, "viewType", -1) == 188:
                         insert_idx = i + 1
                         break
                         
@@ -82,33 +81,132 @@ class SettingsAccountInfoHook(MethodHook):
             def create_account_item(item_id, label, value, need_divider=True):
                 if TextDetailSettingsCellClass is not None:
                     try:
-                        # Instantiate the custom cell with the activity context
                         context = activity.getContext()
                         cell = TextDetailSettingsCellClass(context)
-                        # Top text (big) is the value, bottom text (small) is the label
                         cell.setTextAndValue(value, label, need_divider)
                         item = UItem.asCustom(item_id, cell)
                         return item
                     except Exception:
                         pass
                 
-                # Fallback
                 return UItem.asSettingsCell(item_id, label, value)
 
+            account_title = LocaleController.getString("Account", R.string.Account)
+            phone_title = LocaleController.getString("PhoneNumber", R.string.PhoneNumber)
+            username_title = LocaleController.getString("Username", R.string.Username)
+            bio_title = LocaleController.getString("UserBio", R.string.UserBio)
+
             account_items = []
-            account_items.append(UItem.asHeader("Акаунт"))
+            account_items.append(UItem.asHeader(account_title))
             if phone is not None:
-                account_items.append(create_account_item(1001, "Номер телефона", phone, True))
+                account_items.append(create_account_item(1001, phone_title, phone, True))
             if username is not None:
-                account_items.append(create_account_item(1002, "Ім'я користувача", username, True))
+                account_items.append(create_account_item(1002, username_title, username, True))
             account_items.append(create_account_item(1003, "ID", str(user_id), about is not None))
             if about is not None:
-                account_items.append(create_account_item(1004, "Про себе", about, False))
+                account_items.append(create_account_item(1004, bio_title, about, False))
             account_items.append(UItem.asShadow(None))
             
-            # Insert them
             for item in reversed(account_items):
                 items.add(insert_idx, item)
                 
+        except Exception:
+            pass
+
+
+class SettingsAccountOnClickHook(MethodHook):
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+    def before_hooked_method(self, param):
+        if not self.plugin.get_setting("settings_account_info", False):
+            return
+
+        try:
+            item = param.args[0]
+            if item is None:
+                return
+                
+            item_id = getattr(item, "id", 0)
+            if item_id not in (1001, 1002, 1003, 1004):
+                return
+                
+            activity = param.thisObject
+            from org.telegram.messenger import AndroidUtilities, LocaleController, R
+            from org.telegram.ui.Components import BulletinFactory
+
+            if item_id == 1001:
+                from org.telegram.ui import ActionIntroActivity
+                activity.presentFragment(ActionIntroActivity(ActionIntroActivity.ACTION_TYPE_CHANGE_PHONE_NUMBER))
+                param.setResult(None)
+            elif item_id == 1002:
+                from org.telegram.ui import ChangeUsernameActivity
+                activity.presentFragment(ChangeUsernameActivity())
+                param.setResult(None)
+            elif item_id == 1003:
+                user_config = activity.getUserConfig()
+                user_id_str = str(user_config.getClientUserId())
+                AndroidUtilities.addToClipboard(user_id_str)
+                msg = LocaleController.getString("TextCopied", R.string.TextCopied)
+                BulletinFactory.of(activity).createCopyBulletin(msg).show()
+                param.setResult(None)
+            elif item_id == 1004:
+                from org.telegram.ui import ChangeBioActivity
+                activity.presentFragment(ChangeBioActivity())
+                param.setResult(None)
+        except Exception:
+            pass
+
+
+class SettingsAccountOnLongClickHook(MethodHook):
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+    def before_hooked_method(self, param):
+        if not self.plugin.get_setting("settings_account_info", False):
+            return
+
+        try:
+            item = param.args[0]
+            if item is None:
+                return
+                
+            item_id = getattr(item, "id", 0)
+            if item_id not in (1001, 1002, 1003, 1004):
+                return
+                
+            activity = param.thisObject
+            user_config = activity.getUserConfig()
+            user_id = int(user_config.getClientUserId())
+            full = activity.getMessagesController().getUserFull(user_id)
+            user = activity.getMessagesController().getUser(user_id)
+
+            from org.telegram.messenger import AndroidUtilities, LocaleController, R
+            from org.telegram.ui.Components import BulletinFactory
+
+            to_copy = None
+            bulletin_msg = LocaleController.getString("TextCopied", R.string.TextCopied)
+
+            if item_id == 1001:
+                phone = getattr(user, "phone", None)
+                if phone:
+                    to_copy = "+" + str(phone)
+                    bulletin_msg = LocaleController.getString("PhoneCopied", R.string.PhoneCopied)
+            elif item_id == 1002:
+                username = getattr(user, "username", None)
+                if username:
+                    to_copy = "@" + str(username)
+                    bulletin_msg = LocaleController.getString("UsernameCopied", R.string.UsernameCopied)
+            elif item_id == 1003:
+                to_copy = str(user_id)
+            elif item_id == 1004:
+                if full and getattr(full, "about", None):
+                    to_copy = str(full.about)
+
+            if to_copy:
+                AndroidUtilities.addToClipboard(to_copy)
+                BulletinFactory.of(activity).createCopyBulletin(bulletin_msg).show()
+
+            param.setResult(True)
         except Exception:
             pass

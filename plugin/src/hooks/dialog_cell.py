@@ -76,6 +76,7 @@ class DialogCellBuildLayoutHook(MethodHook):
         self.fields = _FieldCache()
         self.ThemeProxy = find_class("org.telegram.ui.ActionBar.Theme")
         self.AndroidUtilities = find_class("org.telegram.messenger.AndroidUtilities")
+        self.LocaleController = find_class("org.telegram.messenger.LocaleController")
 
     def before_hooked_method(self, param):
         this = param.thisObject
@@ -156,6 +157,13 @@ class DialogCellBuildLayoutHook(MethodHook):
                 _SHARED_LAYOUT_CACHE.pop(cell_id, None)
                 return
 
+            is_rtl = False
+            try:
+                if self.LocaleController is not None and hasattr(self.LocaleController, "isRTL"):
+                    is_rtl = bool(self.LocaleController.isRTL)
+            except Exception:
+                pass
+
             icon_w = pin_drawable.getIntrinsicWidth()
             icon_h = pin_drawable.getIntrinsicHeight()
             measured_w = this.getMeasuredWidth()
@@ -167,32 +175,60 @@ class DialogCellBuildLayoutHook(MethodHook):
 
             pin_top = count_top + (AndroidUtilities.dp(20.0) - icon_h) // 2
 
-            if unread_count != 0 or mark_unread or draw_count:
-                try:
-                    count_left = int(self.fields.get(this, "countLeft"))
-                    pin_left = count_left - icon_w - AndroidUtilities.dp(6.0)
-                except Exception:
-                    pin_left = measured_w - icon_w - AndroidUtilities.dp(14.0)
-            else:
-                pin_left = measured_w - icon_w - AndroidUtilities.dp(14.0)
-
             badge_gap = AndroidUtilities.dp(6.0)
-            if bool(self.fields.get(this, "drawReactionMention", False)):
-                reaction_left = self.fields.get(this, "reactionMentionLeft")
-                if reaction_left is not None:
-                    pin_left = min(pin_left, int(reaction_left) - icon_w - badge_gap)
-            if bool(self.fields.get(this, "drawPollVotesMention", False)):
-                poll_left = self.fields.get(this, "pollVotesMentionLeft")
-                if poll_left is not None:
-                    pin_left = min(pin_left, int(poll_left) - icon_w - badge_gap)
-            if bool(self.fields.get(this, "drawMention", False)):
-                mention_left = self.fields.get(this, "mentionLeft")
-                if mention_left is not None:
-                    pin_left = min(pin_left, int(mention_left) - icon_w - badge_gap)
-            if bool(self.fields.get(this, "drawError", False)):
-                error_left = self.fields.get(this, "errorLeft")
-                if error_left is not None:
-                    pin_left = min(pin_left, int(error_left) - icon_w - badge_gap)
+
+            if not is_rtl:
+                if unread_count != 0 or mark_unread or draw_count:
+                    try:
+                        count_left = int(self.fields.get(this, "countLeft"))
+                        pin_left = count_left - icon_w - badge_gap
+                    except Exception:
+                        pin_left = measured_w - icon_w - AndroidUtilities.dp(14.0)
+                else:
+                    pin_left = measured_w - icon_w - AndroidUtilities.dp(14.0)
+
+                if bool(self.fields.get(this, "drawReactionMention", False)):
+                    reaction_left = self.fields.get(this, "reactionMentionLeft")
+                    if reaction_left is not None:
+                        pin_left = min(pin_left, int(reaction_left) - icon_w - badge_gap)
+                if bool(self.fields.get(this, "drawPollVotesMention", False)):
+                    poll_left = self.fields.get(this, "pollVotesMentionLeft")
+                    if poll_left is not None:
+                        pin_left = min(pin_left, int(poll_left) - icon_w - badge_gap)
+                if bool(self.fields.get(this, "drawMention", False)):
+                    mention_left = self.fields.get(this, "mentionLeft")
+                    if mention_left is not None:
+                        pin_left = min(pin_left, int(mention_left) - icon_w - badge_gap)
+                if bool(self.fields.get(this, "drawError", False)):
+                    error_left = self.fields.get(this, "errorLeft")
+                    if error_left is not None:
+                        pin_left = min(pin_left, int(error_left) - icon_w - badge_gap)
+            else:
+                pin_left = AndroidUtilities.dp(14.0)
+                if unread_count != 0 or mark_unread or draw_count:
+                    try:
+                        count_left = int(self.fields.get(this, "countLeft"))
+                        count_w = int(self.fields.get(this, "countWidth", 0))
+                        pin_left = max(pin_left, count_left + count_w + AndroidUtilities.dp(11.0) + badge_gap)
+                    except Exception:
+                        pass
+                if bool(self.fields.get(this, "drawReactionMention", False)):
+                    reaction_left = self.fields.get(this, "reactionMentionLeft")
+                    if reaction_left is not None:
+                        pin_left = max(pin_left, int(reaction_left) + AndroidUtilities.dp(25.0) + badge_gap)
+                if bool(self.fields.get(this, "drawPollVotesMention", False)):
+                    poll_left = self.fields.get(this, "pollVotesMentionLeft")
+                    if poll_left is not None:
+                        pin_left = max(pin_left, int(poll_left) + AndroidUtilities.dp(25.0) + badge_gap)
+                if bool(self.fields.get(this, "drawMention", False)):
+                    mention_left = self.fields.get(this, "mentionLeft")
+                    mention_w = int(self.fields.get(this, "mentionWidth", 0))
+                    if mention_left is not None:
+                        pin_left = max(pin_left, int(mention_left) + mention_w + AndroidUtilities.dp(11.0) + badge_gap)
+                if bool(self.fields.get(this, "drawError", False)):
+                    error_left = self.fields.get(this, "errorLeft")
+                    if error_left is not None:
+                        pin_left = max(pin_left, int(error_left) + AndroidUtilities.dp(29.0) + badge_gap)
 
             _SHARED_LAYOUT_CACHE.set(cell_id, (pin_left, pin_top, icon_w, icon_h, pin_drawable))
         except Exception as e:

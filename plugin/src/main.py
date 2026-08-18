@@ -13,8 +13,11 @@ from .hooks import (
     ProfileLevelsHook,
     ImmersiveDrawerHook,
     SettingsAccountInfoHook,
+    SettingsAccountOnClickHook,
+    SettingsAccountOnLongClickHook,
     ComposeButtonHook,
     SettingsIconsHook,
+    AudioPlayerTopBarHook,
     CameraTileSingleCellHook,
     WallpaperSourceDimHook,
     WallpaperColorDimHook,
@@ -112,12 +115,20 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
             hooked = self.hook_all_methods(SettingsActivityClass, "fillItems", SettingsAccountInfoHook(self))
             if hooked:
                 self.log("Hooked SettingsActivity.fillItems")
+            self.hook_all_methods(SettingsActivityClass, "onClick", SettingsAccountOnClickHook(self))
+            self.hook_all_methods(SettingsActivityClass, "onLongClick", SettingsAccountOnLongClickHook(self))
 
             SettingCellClass = JavaClass.forName("org.telegram.ui.SettingsActivity$SettingCell")
             if SettingCellClass:
                 hooked = self.hook_all_methods(SettingCellClass, "set", SettingsIconsHook(self))
                 if hooked:
                     self.log("Hooked SettingsActivity.SettingCell.set")
+
+        FragmentContextViewClass = JavaClass.forName("org.telegram.ui.Components.FragmentContextView")
+        if FragmentContextViewClass:
+            self.hook_all_constructors(FragmentContextViewClass, AudioPlayerTopBarHook(self))
+            self.hook_all_methods(FragmentContextViewClass, "checkCreateView", AudioPlayerTopBarHook(self))
+            self.log("Hooked FragmentContextView")
 
         DialogsActivityClass = JavaClass.forName("org.telegram.ui.DialogsActivity")
         if DialogsActivityClass:

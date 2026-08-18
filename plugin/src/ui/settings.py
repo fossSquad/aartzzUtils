@@ -127,5 +127,13 @@ class SettingsMixin:
                     default=False,
                     icon="msg_photo_blur",
                     on_change=lambda v: self.set_setting("blur_dim_wallpaper", v)
+                ),
+                Switch(
+                    key="audio_bar_long_click",
+                    text=strings("audio_bar_long_click_title"),
+                    subtext=strings("audio_bar_long_click_desc"),
+                    default=False,
+                    icon="msg_music",
+                    on_change=lambda v: self.set_setting("audio_bar_long_click", v)
                 )]
 
