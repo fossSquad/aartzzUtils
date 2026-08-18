@@ -4,6 +4,30 @@
 
 `aartzzUtils` is a Python plugin for **exteraGram** (an Android Telegram client fork). It restores legacy UI behavior removed in newer Telegram versions by hooking Java methods inside the running app. It is NOT a standalone Python app — the code only executes inside exteraGram's Elyx plugin runtime. GPL v3, alpha-stage (README warns of bugs).
 
+## Project structure
+
+```
+plugin/
+  metainfo.yml          # plugin id, name, description, version, app_version — bump `version` here before tagging
+  .elyxbuilder/
+    config.yml          # build config: source dir, zipFormat, compilationIgnore, obfuscation
+  locales/
+    strings_{en,ru,uk}.yml   # ALL user-facing strings; every key must exist in all three
+  src/
+    main.py             # entrypoint; excluded from compilation (compilationIgnore); resolves Java classes + registers hooks
+    hooks/              # one file per feature, one or more MethodHook classes each
+      __init__.py       # must re-export every hook class — not auto-exported
+    ui/
+      settings.py       # SettingsMixin.create_settings() — every Header/Switch for the plugin UI
+refmap.yml              # maps Elyx paths: metainfo, main, strings, elyxbuilder
+requirements.txt        # only dependency: ElyxBuilder
+builds/                 # elyb output (aartzzutils.elyx) — gitignored
+.github/workflows/      # build.yml (push/PR to main) + release.yml (v* tags)
+docs/                   # README screenshots
+```
+
+`plugin/src/hooks/system_bars.py` (`LaunchActivityNavBarColorHook`) is **not** exported in `hooks/__init__.py` nor registered in `main.py` — treat it as the reference for the "add a feature" wiring below.
+
 ## Build & verify
 
 ```bash
