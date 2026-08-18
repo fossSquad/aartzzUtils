@@ -24,6 +24,8 @@ compose_pencil_title: Use Pencil Compose Button
 compose_pencil_desc: Replaces the bottom chat-plus button with a pencil
 rectangular_ui_title: Rectangular Chat UI
 rectangular_ui_desc: Disables rounded corners for the chat header and message input field
+rectangular_pinned_panel_title: Rectangular Pinned Messages
+rectangular_pinned_panel_desc: Disables rounded corners for the pinned messages bar in chats
 sidebar_contrast_title: Darker Immersive Sidebar
 sidebar_contrast_desc: Use a dark scrim behind the immersive sidebar
 settings_account_info_title: Show Account Details

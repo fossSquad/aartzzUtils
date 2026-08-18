@@ -24,6 +24,8 @@ compose_pencil_title: Кнопка создания в виде карандаш
 compose_pencil_desc: Заменяет нижнюю кнопку чата с плюсом на карандаш
 rectangular_ui_title: Прямоугольный интерфейс в чате
 rectangular_ui_desc: Делает шапку чата и поле ввода прямоугольными (без закруглений)
+rectangular_pinned_panel_title: Прямоугольные закрепленные сообщения
+rectangular_pinned_panel_desc: Отключает закругления для панели закрепленных сообщений в чате
 sidebar_contrast_title: Более темный иммерсивный сайдбар
 sidebar_contrast_desc: Использует темное затемнение за сайдбаром
 settings_account_info_title: Показывать данные аккаунта

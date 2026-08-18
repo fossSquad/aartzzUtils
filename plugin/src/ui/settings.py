@@ -60,8 +60,17 @@ class SettingsMixin:
                 subtext=strings("rectangular_ui_desc"),
                 default=False,
                 icon="msg_theme",
-                on_change=lambda v: self.set_setting("rectangular_ui", v)
-            ),
+                on_change=lambda v: self.set_setting("rectangular_ui", v, reload_settings=True)
+            )] + ([
+                Switch(
+                    key="rectangular_pinned_panel",
+                    text=strings("rectangular_pinned_panel_title"),
+                    subtext=strings("rectangular_pinned_panel_desc"),
+                    default=False,
+                    icon="msg_pin",
+                    on_change=lambda v: self.set_setting("rectangular_pinned_panel", v)
+                )
+            ] if self.get_setting("rectangular_ui", False) else []) + [
             Header(text=strings("settings_home_header")),
             Switch(
                 key="pinned_bg",
@@ -133,7 +142,7 @@ class SettingsMixin:
                     text=strings("audio_bar_long_click_title"),
                     subtext=strings("audio_bar_long_click_desc"),
                     default=False,
-                    icon="msg_music",
+                    icon="msg_played",
                     on_change=lambda v: self.set_setting("audio_bar_long_click", v)
                 )]
 

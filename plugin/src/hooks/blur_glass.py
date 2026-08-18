@@ -165,7 +165,7 @@ class ChatActivityTopPanelBoundsHook(MethodHook):
         self._saved_divider_alpha = None
 
     def before_hooked_method(self, param):
-        if not self.plugin.get_setting("rectangular_ui", False):
+        if not (self.plugin.get_setting("rectangular_ui", False) and self.plugin.get_setting("rectangular_pinned_panel", False)):
             return
         try:
             layout = param.thisObject
@@ -247,7 +247,7 @@ class TopPanelPaddingHook(MethodHook):
         self.plugin = plugin
         
     def before_hooked_method(self, param):
-        if not self.plugin.get_setting("rectangular_ui", False):
+        if not (self.plugin.get_setting("rectangular_ui", False) and self.plugin.get_setting("rectangular_pinned_panel", False)):
             return
         # Zero out ONLY paddingTop (index 1) to eliminate the gap between the
         # action bar and the pinned content. paddingBottom (index 3) is kept

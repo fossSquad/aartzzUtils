@@ -24,6 +24,8 @@ compose_pencil_title: Кнопка створення у вигляді олів
 compose_pencil_desc: Замінює нижню кнопку чату з плюсом на олівець
 rectangular_ui_title: Прямокутний інтерфейс у чаті
 rectangular_ui_desc: Робить шапку чату та поле вводу прямокутними (без заокруглень)
+rectangular_pinned_panel_title: Прямокутні закріплені повідомлення
+rectangular_pinned_panel_desc: Вимикає заокруглення для панелі закріплених повідомлень у чаті
 sidebar_contrast_title: Темніший іммерсивний сайдбар
 sidebar_contrast_desc: Використовує темне затемнення позаду сайдбара
 settings_account_info_title: Показувати дані акаунта
