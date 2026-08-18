@@ -7,8 +7,8 @@ Plugin for exteraGram aimed to port legacy functions, that removed in newer tele
 [![Download](https://img.shields.io/badge/Download-latest-green.svg)](https://nightly.link/fossSquad/aartzzUtils/workflows/build/main?preview)
 
 ### Screenshots
-| | | | |
-|---|---|---|---|
+| | |
+|---|---|
 | <img src="docs/images/1.png" width="140"/> | <img src="docs/images/2.png" width="140"/> |
 | Settings | legacy chat UI port |
 
