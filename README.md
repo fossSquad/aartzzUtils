@@ -6,6 +6,9 @@ Plugin for exteraGram aimed to port legacy functions, that removed in newer tele
 [![Channel](https://img.shields.io/badge/Channel-Telegram-blue.svg)](https://t.me/fossSquad)
 [![Download](https://img.shields.io/badge/Download-latest-green.svg)](https://nightly.link/fossSquad/aartzzUtils/workflows/build/main?preview)
 
+> [!WARNING]  
+> Plugin in alpha test, except bugs.
+
 ### Screenshots
 | | |
 |---|---|
