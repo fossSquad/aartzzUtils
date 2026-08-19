@@ -118,8 +118,90 @@ class SendButtonOnDrawHook(MethodHook):
             except Exception:
                 pass
 
+class SendButtonUpdateColorsHook(MethodHook):
+    def __init__(self, plugin):
+        self.plugin = plugin
+
+    def after_hooked_method(self, param):
+        if not hasattr(self, "_fired_logged"):
+            self._fired_logged = True
+            self.plugin.log("[sendbtn] updateColors FIRED (first time)")
+        if not self.plugin.get_setting("hide_send_button_bg", False):
+            return
+        try:
+            view = param.thisObject
+            self.plugin.log("[sendbtn] updateColors hooked, setting on")
+            parent = view.getParent()
+            outer = None
+            while parent:
+                if "ChatActivityEnterView" in parent.getClass().getName() and "$" not in parent.getClass().getName():
+                    outer = parent
+                    break
+                parent = parent.getParent()
+            if not outer:
+                self.plugin.log("[sendbtn] outer ChatActivityEnterView not found")
+                return
+            edit = get_private_field(outer, "messageEditText")
+            if edit is not None:
+                text = edit.getText()
+                if text is not None and text.length() > 0:
+                    self.plugin.log("[sendbtn] text non-empty, keeping bg")
+                    return
+            paint = get_private_field(view, "backgroundPaint")
+            if paint is not None:
+                before = paint.getColor()
+                paint.setColor(0)
+                self.plugin.log(f"[sendbtn] backgroundPaint color {before} -> 0")
+            else:
+                self.plugin.log("[sendbtn] backgroundPaint is None")
+        except Exception as e:
+            self.plugin.log(f"[sendbtn] updateColors hook error: {e}")
+
+
 class ChatActivityEnterViewUpdateColorsHook(MethodHook):
     def __init__(self, plugin):
         pass
     def after_hooked_method(self, param):
         pass
+
+
+class AudioVideoOutlineHook(MethodHook):
+    """Hides the circular outline behind the voice/video (mic/camera) button.
+
+    The real button is ChatActivityEnterView.audioVideoSendButton — an
+    anonymous view (ChatActivityEnterView$25 with the base icon pack,
+    $26 with legacy outline icons). Both override draw(Canvas): they paint
+    the outline drawable (outer.micOutline / outer.cameraOutline) and return
+    early. Instead of intercepting every draw() call (a reflective invoke
+    through the Python/Java bridge per frame was both slow and unreliable),
+    we swap the OUTER's outline drawables for the plain mic/camera glyphs
+    ONCE. The fields are only written in the outer's <init>, so the swap
+    persists and the built-in draw() renders the bare glyph with zero
+    per-frame hook cost.
+    """
+
+    def __init__(self, plugin):
+        self.plugin = plugin
+        self._done = set()
+
+    def before_hooked_method(self, param):
+        try:
+            if not self.plugin.get_setting("hide_send_button_bg", False):
+                return
+            view = param.thisObject
+            vid = hash(view)
+            if vid in self._done:
+                return
+            outer = get_private_field(view, "this$0")
+            if outer is not None:
+                for outline_name, plain_name in (
+                    ("micOutline", "micDrawable"),
+                    ("cameraOutline", "cameraDrawable"),
+                ):
+                    plain = get_private_field(outer, plain_name)
+                    if plain is not None:
+                        set_private_field(outer, outline_name, plain)
+                self.plugin.log("[outline] swapped outline drawables for plain icons")
+            self._done.add(vid)
+        except Exception as e:
+            self.plugin.log(f"[outline] swap error: {e}")
