@@ -1,4 +1,5 @@
 from base_plugin import MethodHook
+from hook_utils import get_private_field
 from android_utils import OnLongClickListener
 
 
@@ -18,7 +19,7 @@ class AudioPlayerTopBarHook(MethodHook):
                     if not self.plugin.get_setting("audio_bar_long_click", False):
                         return False
 
-                    current_style = getattr(v, "currentStyle", -1)
+                    current_style = getattr(view, "currentStyle", -1)
                     if current_style != 0:
                         return False
 
@@ -30,11 +31,11 @@ class AudioPlayerTopBarHook(MethodHook):
                     if message_object is None:
                         return False
 
-                    fragment = getattr(v, "fragment", None)
+                    fragment = getattr(view, "fragment", None)
                     if fragment is None:
                         return False
 
-                    chat_activity = getattr(v, "chatActivity", None)
+                    chat_activity = getattr(view, "chatActivity", None)
                     dialog_id = 0
                     if chat_activity is not None:
                         dialog_id = chat_activity.getDialogId()
@@ -59,7 +60,16 @@ class AudioPlayerTopBarHook(MethodHook):
                 except Exception:
                     return False
 
-            view.setOnLongClickListener(OnLongClickListener(handle_long_click))
+            listener = OnLongClickListener(handle_long_click)
+            view.setOnLongClickListener(listener)
+            
+            selector = get_private_field(view, "selector")
+            if selector is not None:
+                selector.setOnLongClickListener(listener)
+                
+            frame_layout = get_private_field(view, "frameLayout")
+            if frame_layout is not None:
+                frame_layout.setOnLongClickListener(listener)
         except Exception:
             pass
 

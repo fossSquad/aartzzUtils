@@ -14,7 +14,7 @@ class GetThemedColorHook(MethodHook):
             self.ThreadClass = None
 
     def after_hooked_method(self, param):
-        if not self.setting_hide_bg:
+        if not self.plugin.get_setting("hide_send_button_bg", False):
             return
             
         try:
@@ -36,8 +36,6 @@ class GetThemedColorHook(MethodHook):
 class SendButtonOnDrawHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
-        self.setting_hide_bg = self.plugin.get_setting("hide_send_button_bg", False)
-        self.setting_legacy_icons = self.plugin.get_setting("legacy_outline_icons", False)
         try:
             self.SendButtonClass = find_class("org.telegram.ui.Components.ChatActivityEnterView$SendButton")
         except Exception:
@@ -50,14 +48,12 @@ class SendButtonOnDrawHook(MethodHook):
         return "onDraw"
 
     def before_hooked_method(self, param):
-        if not self.setting_hide_bg:
+        hide_bg = self.plugin.get_setting("hide_send_button_bg", False)
+        legacy_icons = self.plugin.get_setting("legacy_outline_icons", False)
+        if not hide_bg and not legacy_icons:
             return
 
         try:
-            if not getattr(self, "logged_dir", False):
-                self.logged_dir = True
-
-            # SendButton is static, so it doesn't have this$0. We traverse parents.
             view = param.thisObject
             parent = view.getParent()
             outer = None
@@ -75,12 +71,13 @@ class SendButtonOnDrawHook(MethodHook):
                 text = messageEditText.getText().toString()
                 
                 if not text:
-                    paint = get_private_field(param.thisObject, "backgroundPaint")
-                    if paint:
-                        self.old_color = paint.getColor()
-                        paint.setColor(0) # transparent
+                    if hide_bg:
+                        paint = get_private_field(param.thisObject, "backgroundPaint")
+                        if paint:
+                            self.old_color = paint.getColor()
+                            paint.setColor(0)
                     
-                    if self.setting_legacy_icons:
+                    if legacy_icons:
                         drawable = get_private_field(param.thisObject, "drawable")
                         micDrawable = get_private_field(outer, "micDrawable")
                         cameraDrawable = get_private_field(outer, "cameraDrawable")
