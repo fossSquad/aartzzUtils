@@ -14,5 +14,15 @@ class ProfileLevelsHook(MethodHook):
             rating_view = get_private_field(param.thisObject, "ratingView")
             if rating_view is not None:
                 rating_view.setVisibility(8)
+                try:
+                    rating_view.setVisibility(False)
+                except Exception:
+                    pass
+                try:
+                    animator = get_private_field(rating_view, "isVisibleAnimator")
+                    if animator is not None:
+                        animator.force(False)
+                except Exception:
+                    pass
         except Exception:
             pass
