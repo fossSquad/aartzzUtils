@@ -137,7 +137,9 @@ class SettingsAccountOnClickHook(MethodHook):
 
             if item_id == 1001:
                 from org.telegram.ui import ActionIntroActivity
-                activity.presentFragment(ActionIntroActivity(ActionIntroActivity.ACTION_TYPE_CHANGE_PHONE_NUMBER))
+                phone_type = getattr(ActionIntroActivity, "ACTION_TYPE_CHANGE_PHONE_NUMBER", None)
+                phone_type = 3 if phone_type is None else int(phone_type)
+                activity.presentFragment(ActionIntroActivity(phone_type))
                 param.setResult(None)
             elif item_id == 1002:
                 from org.telegram.ui import ChangeUsernameActivity
@@ -151,8 +153,8 @@ class SettingsAccountOnClickHook(MethodHook):
                 BulletinFactory.of(activity).createCopyBulletin(msg).show()
                 param.setResult(None)
             elif item_id == 1004:
-                from org.telegram.ui import ChangeBioActivity
-                activity.presentFragment(ChangeBioActivity())
+                from org.telegram.ui import UserInfoActivity
+                activity.presentFragment(UserInfoActivity())
                 param.setResult(None)
         except Exception:
             pass
