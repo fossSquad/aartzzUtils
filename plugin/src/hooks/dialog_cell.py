@@ -1,6 +1,8 @@
 from collections import OrderedDict
+from time import time
 from base_plugin import MethodHook
 from hook_utils import find_class
+
 
 class _FieldCache:
     def __init__(self):
@@ -44,8 +46,10 @@ class _FieldCache:
             pass
         return False
 
+
 def _java_identity(instance):
     return hash(instance)
+
 
 class _BoundedState:
     def __init__(self, limit=256):
@@ -67,54 +71,91 @@ class _BoundedState:
     def pop(self, key, default=None):
         return self.values.pop(key, default)
 
+
+class _SettingsCache:
+    def __init__(self, plugin):
+        self.plugin = plugin
+        self._ts = 0.0
+        self._values = {}
+
+    def get(self, key, default=False):
+        now = time()
+        if now - self._ts > 1.0:
+            self._ts = now
+            self._values = {
+                "legacy_pin_pos": self.plugin.get_setting("legacy_pin_pos", False),
+                "pinned_bg": self.plugin.get_setting("pinned_bg", False),
+                "hide_pin_if_unread": self.plugin.get_setting("hide_pin_if_unread", False),
+            }
+        return self._values.get(key, default)
+
+
 _SHARED_LAYOUT_CACHE = _BoundedState(256)
+
 
 class DialogCellBuildLayoutHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
-        self.alpha_hidden_map = _BoundedState()
         self.fields = _FieldCache()
+        self.settings = _SettingsCache(plugin)
         self.ThemeProxy = find_class("org.telegram.ui.ActionBar.Theme")
         self.AndroidUtilities = find_class("org.telegram.messenger.AndroidUtilities")
         self.LocaleController = find_class("org.telegram.messenger.LocaleController")
+        # Original drawPin/drawPinForced values saved by the before-hook so the
+        # after-hook still knows the cell is pinned after suppression.
+        self._pinned_origins = _BoundedState(256)
 
     def before_hooked_method(self, param):
+        # Suppress the default pin BEFORE buildLayout computes the layout so
+        # the date/time stays anchored to the right edge. update() rewrites
+        # these flags before buildLayout on every state change, so the
+        # suppression persists without any per-frame reflection. The original
+        # values are stashed per cell for the after-hook to read.
+        if not self.settings.get("legacy_pin_pos", False):
+            return
         this = param.thisObject
-        cell_id = _java_identity(this)
-        original_flags = (False, False)
-        
         try:
             dp = self.fields.get(this, "drawPin", False)
             dpf = self.fields.get(this, "drawPinForced", False)
-            
-            is_pinned = bool(dp) or bool(dpf)
-            original_flags = (bool(dp), bool(dpf))
-            
-            if is_pinned and self.plugin.get_setting("legacy_pin_pos", False):
+            if dp or dpf:
+                self._pinned_origins.set(_java_identity(this), (dp, dpf))
                 self.fields.set(this, "drawPin", False)
                 self.fields.set(this, "drawPinForced", False)
-                self.alpha_hidden_map.set(cell_id, original_flags)
         except Exception:
             pass
-        finally:
-            if self.alpha_hidden_map.get(cell_id) is None:
-                self.alpha_hidden_map.set(cell_id, original_flags)
 
     def after_hooked_method(self, param):
+        legacy_pin = self.settings.get("legacy_pin_pos", False)
+        pinned_bg = self.settings.get("pinned_bg", False)
+        if not legacy_pin and not pinned_bg:
+            return
+
         this = param.thisObject
         cell_id = _java_identity(this)
-        original_flags = self.alpha_hidden_map.pop(cell_id, (False, False))
+        try:
+            orig = self._pinned_origins.pop(cell_id, None)
+            if orig is not None:
+                is_pinned = bool(orig[0]) or bool(orig[1])
+            else:
+                dp = self.fields.get(this, "drawPin", False)
+                dpf = self.fields.get(this, "drawPinForced", False)
+                is_pinned = bool(dp) or bool(dpf)
+        except Exception:
+            is_pinned = False
 
-        if original_flags != (False, False):
-            try:
-                self.fields.set(this, "drawPin", original_flags[0])
-                self.fields.set(this, "drawPinForced", original_flags[1])
-            except Exception:
-                pass
-
-        is_pinned = original_flags[0] or original_flags[1]
-        if not is_pinned or not self.plugin.get_setting("legacy_pin_pos", False):
+        if not is_pinned:
             _SHARED_LAYOUT_CACHE.pop(cell_id, None)
+            return
+
+        try:
+            measured_w = int(this.getMeasuredWidth())
+            measured_h = int(this.getMeasuredHeight())
+        except Exception:
+            measured_w = 0
+            measured_h = 0
+
+        if not legacy_pin:
+            _SHARED_LAYOUT_CACHE.set(cell_id, (True, None, measured_w, measured_h))
             return
 
         try:
@@ -132,7 +173,7 @@ class DialogCellBuildLayoutHook(MethodHook):
             except Exception:
                 pass
 
-            if self.plugin.get_setting("hide_pin_if_unread", False) and (unread_count != 0 or mark_unread):
+            if self.settings.get("hide_pin_if_unread", False) and (unread_count != 0 or mark_unread):
                 _SHARED_LAYOUT_CACHE.pop(cell_id, None)
                 return
 
@@ -230,7 +271,10 @@ class DialogCellBuildLayoutHook(MethodHook):
                     if error_left is not None:
                         pin_left = max(pin_left, int(error_left) + AndroidUtilities.dp(29.0) + badge_gap)
 
-            _SHARED_LAYOUT_CACHE.set(cell_id, (pin_left, pin_top, icon_w, icon_h, pin_drawable))
+            _SHARED_LAYOUT_CACHE.set(
+                cell_id, (True, (int(pin_left), int(pin_top), int(icon_w), int(icon_h), pin_drawable), measured_w, measured_h)
+            )
+            # No log here: it flooded logcat and evicted other diagnostics.
         except Exception as e:
             self.plugin.log(f"[buildLayout after] {e}")
 
@@ -238,92 +282,72 @@ class DialogCellBuildLayoutHook(MethodHook):
 class DialogCellOnDrawHook(MethodHook):
     def __init__(self, plugin):
         self.plugin = plugin
-        self.state_map = _BoundedState()
         self.fields = _FieldCache()
+        self.settings = _SettingsCache(plugin)
         self.ThemeProxy = find_class("org.telegram.ui.ActionBar.Theme")
         self.key_chats_pinnedOverlay = getattr(self.ThemeProxy, "key_chats_pinnedOverlay", None)
         self.bg_paint = None
-        
-        self.setting_legacy_pin_pos = self.plugin.get_setting("legacy_pin_pos", False)
-        self.setting_pinned_bg = self.plugin.get_setting("pinned_bg", False)
+        self._color_ts = 0.0
+        self._color = None
+        self._logged = set()
+
+    def _overlay_color(self, this):
+        now = time()
+        if now - self._color_ts > 2.0 or self._color is None:
+            self._color_ts = now
+            color = None
+            if self.key_chats_pinnedOverlay is not None:
+                try:
+                    rp = self.fields.get(this, "resourcesProvider")
+                    color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay, rp)
+                except Exception:
+                    try:
+                        color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay)
+                    except Exception:
+                        color = None
+            self._color = color
+        return self._color
 
     def before_hooked_method(self, param):
+        if not self.settings.get("pinned_bg", False):
+            return
         this = param.thisObject
-        cell_id = _java_identity(this)
-        original_flags = (False, False)
-        is_pinned = False
-        
         try:
-            dp = self.fields.get(this, "drawPin", False)
-            dpf = self.fields.get(this, "drawPinForced", False)
-            
-            is_pinned = bool(dp) or bool(dpf)
-            original_flags = (bool(dp), bool(dpf))
-
-            if is_pinned and self.setting_pinned_bg:
-                canvas = param.args[0]
-                if self.bg_paint is None:
-                    from android.graphics import Paint
-                    self.bg_paint = Paint()
-                try:
-                    try:
-                        rp = self.fields.get(this, "resourcesProvider")
-                        if self.key_chats_pinnedOverlay is not None:
-                            color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay, rp)
-                        else:
-                            raise Exception("no key")
-                    except Exception:
-                        color = self.ThemeProxy.getColor(self.key_chats_pinnedOverlay) if self.key_chats_pinnedOverlay is not None else None
-                    
-                    if color is not None:
-                        self.bg_paint.setColor(color)
-                        self.bg_paint.setAlpha(15)
-                        canvas.drawRect(0.0, 0.0, float(this.getMeasuredWidth()), float(this.getMeasuredHeight()), self.bg_paint)
-                except Exception:
-                    pass
-
-            if is_pinned and self.setting_legacy_pin_pos:
-                try:
-                    self.fields.set(this, "drawPin", False)
-                    self.fields.set(this, "drawPinForced", False)
-                except Exception as e:
-                    self.plugin.log(f"drawPin hide error: {e}")
-
-        except Exception as e:
-            self.plugin.log(f"[before] {e}")
-        finally:
-            self.state_map.set(cell_id, (is_pinned, original_flags))
+            entry = _SHARED_LAYOUT_CACHE.get(_java_identity(this))
+            if entry is None or not entry[0]:
+                return
+            canvas = param.args[0]
+            if self.bg_paint is None:
+                from android.graphics import Paint
+                self.bg_paint = Paint()
+            color = self._overlay_color(this)
+            if color is not None:
+                self.bg_paint.setColor(color)
+                self.bg_paint.setAlpha(15)
+                w = entry[2] or this.getMeasuredWidth()
+                h = entry[3] or this.getMeasuredHeight()
+                canvas.drawRect(0.0, 0.0, float(w), float(h), self.bg_paint)
+        except Exception:
+            pass
 
     def after_hooked_method(self, param):
+        if not self.settings.get("legacy_pin_pos", False):
+            return
         this = param.thisObject
         canvas = param.args[0]
-        cell_id = _java_identity(this)
-        state = self.state_map.pop(cell_id, (False, (False, False)))
-        is_pinned, original_flags = state
-
-        if original_flags != (False, False):
-            try:
-                self.fields.set(this, "drawPin", original_flags[0])
-                self.fields.set(this, "drawPinForced", original_flags[1])
-            except Exception:
-                pass
-
-        if not is_pinned:
-            return
-
-        if not self.setting_legacy_pin_pos:
-            return
-
-        layout = _SHARED_LAYOUT_CACHE.get(cell_id)
-        if layout is None:
-            return
-
         try:
+            cell_id = _java_identity(this)
+            entry = _SHARED_LAYOUT_CACHE.get(cell_id)
+            if entry is None:
+                return
+            is_pinned, layout, _, _ = entry
+            if not is_pinned or layout is None:
+                return
             pin_left, pin_top, icon_w, icon_h, pin_drawable = layout
-            canvas.save()
-            pin_drawable.setBounds(int(pin_left), int(pin_top), int(pin_left + icon_w), int(pin_top + icon_h))
+            pin_drawable.setBounds(pin_left, pin_top, pin_left + icon_w, pin_top + icon_h)
             pin_drawable.draw(canvas)
-            canvas.restore()
+            if cell_id not in self._logged:
+                self._logged.add(cell_id)
+                self.plugin.log(f"[pinned] drawn id={cell_id} pos=({pin_left},{pin_top})")
         except Exception as e:
             self.plugin.log(f"[after layout draw] {e}")
-
