@@ -26,10 +26,11 @@ class SettingsIconsHook(MethodHook):
                     
             icon_view = get_private_field(this, "iconView")
             if icon_view is not None:
-                from org.telegram.ui.ActionBar import Theme
-                from android.graphics import PorterDuff, PorterDuffColorFilter
-                icon_view.setColorFilter(PorterDuffColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteGrayIcon), PorterDuff.Mode.MULTIPLY))
-                
+                # No color filter here: any SRC_IN tint overrides the app's own
+                # native icon tint (white on dark themes) and goes stale on
+                # recycled cells (dark-blue in scrolled-out rows). Let the app
+                # tint the icon itself; we only neutralize the colored
+                # background and center the icon.
                 from org.telegram.ui.Components import LayoutHelper
                 from android.view import Gravity
                 icon_view.setLayoutParams(LayoutHelper.createFrame(28, 28, Gravity.CENTER))
