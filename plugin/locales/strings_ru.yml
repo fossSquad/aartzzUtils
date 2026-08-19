@@ -34,7 +34,6 @@ legacy_settings_icons_title: Старые иконки настроек
 legacy_settings_icons_desc: Использует нейтральные монохромные фоны для иконок
 camera_tile_single_cell_title: Камера в одной ячейке
 camera_tile_single_cell_desc: Оставляет плитку камеры в одной ячейке выбора фото
-blur_dim_wallpaper_title: Затемнять цвета блюра
-blur_dim_wallpaper_desc: Применяет затемнение обоев к верхнему и нижнему блюру
+
 audio_bar_long_click_title: Переход по долгому нажатию на аудиобар
 audio_bar_long_click_desc: Долгое нажатие на панель аудиоплеера открывает сообщение или чат

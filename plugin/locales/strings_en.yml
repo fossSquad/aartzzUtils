@@ -34,7 +34,6 @@ legacy_settings_icons_title: Legacy Settings Icons
 legacy_settings_icons_desc: Use neutral monochrome backgrounds for settings icons
 camera_tile_single_cell_title: Single-cell camera tile
 camera_tile_single_cell_desc: Keep the camera tile to one grid cell in the photo picker
-blur_dim_wallpaper_title: Dim wallpaper blur colors
-blur_dim_wallpaper_desc: Apply wallpaper dimming to the top and bottom blur colors
+
 audio_bar_long_click_title: Navigate on Audio Bar Long Click
 audio_bar_long_click_desc: Long press the audio player bar to jump to the message or chat
