@@ -8,6 +8,8 @@ from .hooks import (
     DialogCellBuildLayoutHook,
     GetThemedColorHook,
     SendButtonOnDrawHook,
+    SendButtonUpdateColorsHook,
+    AudioVideoOutlineHook,
     SpringAnimationsHook,
     VoiceVideoAnimHook,
     ProfileLevelsHook,
@@ -19,8 +21,6 @@ from .hooks import (
     SettingsIconsHook,
     AudioPlayerTopBarHook,
     CameraTileSingleCellHook,
-    WallpaperSourceDimHook,
-    WallpaperColorDimHook,
 
     ChatInputBubbleHook,
     ChatInputUnderKeyboardHook,
@@ -78,6 +78,31 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
                 self.log("Hooked SendButton.onDraw")
             else:
                 self.log("Failed to hook SendButton.onDraw")
+            # SendButton.updateColors() sets backgroundPaint directly from Theme
+            # at the start of every onDraw (bypassing the outer getThemedColor),
+            # so neutralize the paint here instead.
+            hooked = self.hook_all_methods(SendButtonClass, "updateColors", SendButtonUpdateColorsHook(self))
+            if hooked:
+                self.log("Hooked SendButton.updateColors")
+            else:
+                self.log("Failed to hook SendButton.updateColors")
+
+        # 4b. The voice/video (mic/camera) button is NOT ChatActivityEnterView$SendButton
+        # (that is the text-send arrow). It lives in audioVideoSendButton as an anonymous
+        # view: $25 (base icon pack) or $26 (legacy outline icons). Both override
+        # draw(Canvas) and paint the circular outline first via outer.micOutline /
+        # outer.cameraOutline, then super.draw() renders the glyph.
+        for audio_video_name in (
+            "org.telegram.ui.Components.ChatActivityEnterView$25",
+            "org.telegram.ui.Components.ChatActivityEnterView$26",
+        ):
+            AudioVideoViewClass = JavaClass.forName(audio_video_name)
+            if AudioVideoViewClass:
+                hooked = self.hook_all_methods(AudioVideoViewClass, "draw", AudioVideoOutlineHook(self))
+                if hooked:
+                    self.log(f"Hooked {audio_video_name}.draw")
+                else:
+                    self.log(f"Failed to hook {audio_video_name}.draw")
 
         ActionBarLayoutClass = JavaClass.forName("org.telegram.ui.ActionBar.ActionBarLayout")
         if ActionBarLayoutClass:
@@ -137,6 +162,16 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
             )
             if hooked:
                 self.log("Hooked DialogsActivity.updateStoriesPosting")
+            hooked = self.hook_all_methods(
+                DialogsActivityClass, "updateFloatingButtonVisibility", ComposeButtonHook(self)
+            )
+            if hooked:
+                self.log("Hooked DialogsActivity.updateFloatingButtonVisibility")
+            # Re-apply the pencil when returning to the dialogs list (the app
+            # re-sets its icon only on createView/notification events).
+            hooked = self.hook_all_methods(DialogsActivityClass, "onResume", ComposeButtonHook(self))
+            if hooked:
+                self.log("Hooked DialogsActivity.onResume")
 
         PhotoAdapterClass = JavaClass.forName(
             "org.telegram.ui.Components.ChatAttachAlertPhotoLayout$PhotoAttachAdapter"
@@ -145,25 +180,6 @@ class ExteraRestorePlugin(SettingsMixin, BasePlugin):
             hooked = self.hook_all_methods(PhotoAdapterClass, "getItemCount", CameraTileSingleCellHook(self))
             if hooked:
                 self.log("Hooked ChatAttachAlertPhotoLayout.PhotoAttachAdapter.getItemCount")
-
-        WallpaperProviderClass = JavaClass.forName(
-            "org.telegram.ui.Components.chat.WallpaperBitmapProvider"
-        )
-        if WallpaperProviderClass:
-            source_hook = WallpaperSourceDimHook(self)
-            hooked = self.hook_all_methods(
-                WallpaperProviderClass,
-                "updateSourceFromBackgroundViewDrawable",
-                source_hook,
-            )
-            if hooked:
-                self.log("Hooked WallpaperBitmapProvider.updateSourceFromBackgroundViewDrawable")
-            for method_name in ("getStatusBarColor", "getNavigationBarColor"):
-                color_hook = WallpaperColorDimHook(self, source_hook)
-                hooked = self.hook_all_methods(WallpaperProviderClass, method_name, color_hook)
-                if hooked:
-                    self.log(f"Hooked WallpaperBitmapProvider.{method_name}")
-
 
         ChatInputContainerClass = JavaClass.forName("org.telegram.ui.Components.chat.ChatInputViewsContainer")
         if ChatInputContainerClass:
